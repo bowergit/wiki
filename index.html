@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#090b10" />
+  <title>Letter Reveal</title>
+  <style>
+    :root {
+      --bg: #090b10;
+      --panel: rgba(255,255,255,.055);
+      --panel-strong: rgba(255,255,255,.085);
+      --text: #f7f7fb;
+      --muted: #858b99;
+      --accent: #8b7cff;
+      --accent-2: #b6adff;
+      --danger: #ff7070;
+      --cell: clamp(34px, 9.4vw, 56px);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      background:
+        radial-gradient(circle at 50% -20%, rgba(139,124,255,.20), transparent 34%),
+        linear-gradient(180deg, #0d1017 0%, var(--bg) 34%, #07090d 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+
+    .app {
+      width: min(760px, 100%);
+      min-height: 100svh;
+      margin: 0 auto;
+      padding: max(22px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 8vw, 44px);
+      line-height: .98;
+      letter-spacing: -.045em;
+      font-weight: 760;
+    }
+
+    .icon-btn {
+      border: 1px solid rgba(255,255,255,.08);
+      background: var(--panel);
+      color: var(--muted);
+      border-radius: 999px;
+      height: 44px;
+      padding: 0 15px;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease, color .18s ease;
+    }
+    .icon-btn:active { transform: scale(.96); }
+    .icon-btn:not(:disabled):hover { background: var(--panel-strong); color: var(--text); }
+    .icon-btn:disabled { opacity: .35; cursor: default; }
+
+    .entry-card {
+      border: 1px solid rgba(255,255,255,.075);
+      background: rgba(255,255,255,.045);
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+      backdrop-filter: blur(18px);
+      border-radius: var(--radius);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px;
+    }
+
+    #wordInput {
+      min-width: 0;
+      height: 54px;
+      border: 0;
+      outline: 0;
+      border-radius: 15px;
+      background: transparent;
+      color: var(--text);
+      padding: 0 13px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    #wordInput::placeholder { color: #686e7b; }
+
+    .add-btn {
+      height: 54px;
+      border: 0;
+      border-radius: 15px;
+      background: var(--text);
+      color: #0b0d12;
+      min-width: 72px;
+      padding: 0 18px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    .add-btn:active { transform: scale(.96); }
+
+    .stage {
+      flex: 1;
+      min-height: 280px;
+      position: relative;
+      border: 1px solid rgba(255,255,255,.065);
+      background: rgba(0,0,0,.14);
+      border-radius: var(--radius);
+      overflow: hidden;
+      padding: 24px 18px 26px;
+    }
+
+    .stage::after {
+      content: "";
+      position: absolute;
+      inset: auto -20% -55% 10%;
+      height: 65%;
+      background: radial-gradient(circle, rgba(139,124,255,.1), transparent 66%);
+      pointer-events: none;
+    }
+
+    .empty {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 40px;
+      text-align: center;
+      color: #646a77;
+      font-size: 15px;
+      line-height: 1.5;
+      transition: opacity .2s ease;
+    }
+    .stage.has-words .empty { opacity: 0; pointer-events: none; }
+
+    .numbers {
+      display: grid;
+      grid-template-columns: repeat(6, var(--cell));
+      justify-content: center;
+      gap: 0;
+      margin: 0 auto 13px;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity .45s ease .15s, transform .45s cubic-bezier(.2,.8,.2,1) .15s;
+      pointer-events: none;
+    }
+    .stage.grid-mode .numbers { opacity: 1; transform: translateY(0); }
+    .number-label {
+      width: var(--cell);
+      text-align: center;
+      color: #5f6675;
+      font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      transition: color .3s ease, transform .3s ease;
+    }
+    .number-label.selected { color: var(--accent-2); transform: translateY(-2px) scale(1.13); }
+
+    #words {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .word-row {
+      min-height: 43px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      font-size: clamp(24px, 7vw, 36px);
+      line-height: 1.15;
+      font-weight: 650;
+      letter-spacing: -.035em;
+      transition: opacity .25s ease;
+    }
+
+    .letter {
+      display: inline-block;
+      position: relative;
+      text-align: center;
+      will-change: transform, opacity, color;
+      transition:
+        width .62s cubic-bezier(.2,.78,.18,1),
+        color .45s ease,
+        transform .45s cubic-bezier(.2,.78,.18,1),
+        text-shadow .45s ease;
+    }
+
+    .stage.grid-mode .word-row {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: clamp(23px, 6vw, 31px);
+      font-weight: 680;
+      letter-spacing: 0;
+    }
+    .stage.grid-mode .letter { width: var(--cell); }
+    .stage.grid-mode .letter.beyond-six { opacity: .22; }
+    .stage.grid-mode .letter.selected {
+      color: var(--accent-2);
+      transform: scale(1.11);
+      text-shadow: 0 0 22px rgba(139,124,255,.55);
+    }
+
+    .controls {
+      border: 1px solid rgba(255,255,255,.075);
+      background: rgba(255,255,255,.04);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 0 4px 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .control-label span:last-child {
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+      color: #5f6572;
+    }
+
+    .dice-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+    }
+    .die-btn {
+      aspect-ratio: 1 / 1;
+      min-width: 0;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 15px;
+      background: rgba(255,255,255,.045);
+      color: #b9bec9;
+      font-size: clamp(17px, 5vw, 23px);
+      font-weight: 760;
+      cursor: pointer;
+      transition: transform .18s ease, background .25s ease, color .25s ease, border-color .25s ease;
+    }
+    .die-btn:active { transform: scale(.93); }
+    .die-btn:hover:not(:disabled) { background: rgba(255,255,255,.08); color: white; }
+    .die-btn.active {
+      border-color: rgba(139,124,255,.7);
+      background: rgba(139,124,255,.18);
+      color: #d7d2ff;
+    }
+    .die-btn:disabled { opacity: .28; cursor: default; }
+
+    .reveal {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      min-height: 92px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding-top: 18px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity .4s ease, transform .5s cubic-bezier(.2,.8,.2,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal small {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .answer {
+      min-height: 45px;
+      font-size: clamp(34px, 10vw, 54px);
+      line-height: 1;
+      font-weight: 820;
+      letter-spacing: .08em;
+      color: white;
+      text-transform: uppercase;
+    }
+    .answer-char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(-20px) scale(.75);
+      filter: blur(5px);
+      animation: land .55s cubic-bezier(.16,.95,.28,1.18) forwards;
+    }
+    @keyframes land {
+      to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+
+    .footer-actions {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      min-height: 44px;
+    }
+
+    .shake { animation: shake .35s ease; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      50% { transform: translateX(6px); }
+      75% { transform: translateX(-3px); }
+    }
+
+    @media (max-width: 390px) {
+      .app { padding-left: 12px; padding-right: 12px; gap: 13px; }
+      .stage { padding-left: 8px; padding-right: 8px; }
+      .dice-grid { gap: 5px; }
+      .die-btn { border-radius: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <p class="eyebrow">Wikipedia</p>
+        <h1>Letter Reveal</h1>
+      </div>
+      <button id="resetBtn" class="icon-btn" type="button" disabled>Reset</button>
+    </header>
+
+    <form id="wordForm" class="entry-card" autocomplete="off">
+      <input id="wordInput" type="text" inputmode="text" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Type the next word…" aria-label="Next word" />
+      <button class="add-btn" type="submit">Add</button>
+    </form>
+
+    <section id="stage" class="stage" aria-live="polite">
+      <div class="empty">Add each word as it is called out.<br>Then choose the number rolled on the die.</div>
+      <div id="numbers" class="numbers" aria-hidden="true"></div>
+      <div id="words"></div>
+      <div id="reveal" class="reveal">
+        <small>Selected letters</small>
+        <div id="answer" class="answer"></div>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="control-label"><span>Die result</span><span>Choose 1–6</span></div>
+      <div id="dice" class="dice-grid"></div>
+    </section>
+
+    <div class="footer-actions">
+      <button id="undoBtn" class="icon-btn" type="button" disabled>Undo last word</button>
+    </div>
+  </main>
+
+  <script>
+    const state = {
+      words: [],
+      selected: null,
+      revealing: false
+    };
+
+    const stage = document.getElementById('stage');
+    const wordsEl = document.getElementById('words');
+    const numbersEl = document.getElementById('numbers');
+    const diceEl = document.getElementById('dice');
+    const revealEl = document.getElementById('reveal');
+    const answerEl = document.getElementById('answer');
+    const wordForm = document.getElementById('wordForm');
+    const wordInput = document.getElementById('wordInput');
+    const undoBtn = document.getElementById('undoBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function cleanWord(value) {
+      return value.trim().replace(/\s+/g, ' ');
+    }
+
+    function charsOf(word) {
+      return Array.from(word);
+    }
+
+    function eligible(word, n) {
+      return charsOf(word.replace(/\s/g, '')).length >= n;
+    }
+
+    function displayChars(word) {
+      return charsOf(word.replace(/\s/g, ''));
+    }
+
+    function renderNumbers() {
+      numbersEl.innerHTML = '';
+      for (let i = 1; i <= 6; i++) {
+        const el = document.createElement('div');
+        el.className = 'number-label' + (state.selected === i ? ' selected' : '');
+        el.textContent = i;
+        numbersEl.appendChild(el);
+      }
+    }
+
+    function renderDice() {
+      diceEl.innerHTML = '';
+      for (let i = 1; i <= 6; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'die-btn' + (state.selected === i ? ' active' : '');
+        btn.textContent = i;
+        btn.disabled = state.words.length === 0 || state.revealing;
+        btn.addEventListener('click', () => selectNumber(i));
+        diceEl.appendChild(btn);
+      }
+    }
+
+    function renderWords() {
+      wordsEl.innerHTML = '';
+      state.words.forEach((word, rowIndex) => {
+        const row = document.createElement('div');
+        row.className = 'word-row';
+        row.dataset.row = rowIndex;
+
+        displayChars(word).forEach((char, charIndex) => {
+          const span = document.createElement('span');
+          span.className = 'letter';
+          if (charIndex >= 6) span.classList.add('beyond-six');
+          if (state.selected && charIndex === state.selected - 1) span.classList.add('selected');
+          span.textContent = char;
+          row.appendChild(span);
+        });
+        wordsEl.appendChild(row);
+      });
+
+      stage.classList.toggle('has-words', state.words.length > 0);
+      stage.classList.toggle('grid-mode', state.selected !== null);
+      undoBtn.disabled = state.words.length === 0 || state.revealing;
+      resetBtn.disabled = state.words.length === 0 && state.selected === null;
+    }
+
+    function renderAnswer(animated = false) {
+      answerEl.innerHTML = '';
+      if (!state.selected) {
+        revealEl.classList.remove('visible');
+        return;
+      }
+
+      const letters = state.words.map(word => {
+        const chars = displayChars(word);
+        return chars[state.selected - 1] || '·';
+      });
+
+      letters.forEach((char, index) => {
+        const span = document.createElement('span');
+        span.className = 'answer-char';
+        span.textContent = char;
+        span.style.animationDelay = animated ? `${360 + index * 110}ms` : '0ms';
+        answerEl.appendChild(span);
+      });
+
+      setTimeout(() => revealEl.classList.add('visible'), animated ? 300 : 0);
+    }
+
+    function sync(animatedAnswer = false) {
+      renderNumbers();
+      renderWords();
+      renderDice();
+      renderAnswer(animatedAnswer);
+    }
+
+    function addWord(raw) {
+      const word = cleanWord(raw);
+      if (!word) return;
+
+      if (state.selected !== null) {
+        state.selected = null;
+        revealEl.classList.remove('visible');
+        answerEl.innerHTML = '';
+      }
+
+      state.words.push(word);
+      sync(false);
+      wordInput.value = '';
+      wordInput.focus();
+    }
+
+    function selectNumber(number) {
+      if (!state.words.length || state.revealing) return;
+
+      const invalidRows = state.words
+        .map((word, index) => ({ word, index }))
+        .filter(({ word }) => !eligible(word, number));
+
+      if (invalidRows.length) {
+        const row = wordsEl.querySelector(`[data-row="${invalidRows[0].index}"]`);
+        if (row) {
+          row.classList.remove('shake');
+          void row.offsetWidth;
+          row.classList.add('shake');
+        }
+        wordInput.placeholder = `A word is shorter than ${number} letters`;
+        setTimeout(() => wordInput.placeholder = 'Type the next word…', 1700);
+        return;
+      }
+
+      state.revealing = true;
+      state.selected = number;
+      revealEl.classList.remove('visible');
+      answerEl.innerHTML = '';
+
+      renderNumbers();
+      renderWords();
+      renderDice();
+
+      // Give the grid movement a beat before the final letters appear below.
+      setTimeout(() => {
+        renderAnswer(true);
+        state.revealing = false;
+        renderDice();
+        undoBtn.disabled = false;
+      }, 420);
+    }
+
+    function reset() {
+      state.words = [];
+      state.selected = null;
+      state.revealing = false;
+      revealEl.classList.remove('visible');
+      sync(false);
+      wordInput.value = '';
+      wordInput.focus();
+    }
+
+    wordForm.addEventListener('submit', event => {
+      event.preventDefault();
+      addWord(wordInput.value);
+    });
+
+    undoBtn.addEventListener('click', () => {
+      if (!state.words.length || state.revealing) return;
+      state.words.pop();
+      state.selected = null;
+      revealEl.classList.remove('visible');
+      sync(false);
+      wordInput.focus();
+    });
+
+    resetBtn.addEventListener('click', reset);
+
+    renderNumbers();
+    renderDice();
+    renderWords();
+    wordInput.focus();
+  </script>
+</body>
+</html>
