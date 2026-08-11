@@ -14,7 +14,7 @@
       --muted: #858b99;
       --accent: #8b7cff;
       --accent-2: #b6adff;
-      --danger: #ff7070;
+      --danger: #ff5656;
       --cell: clamp(34px, 9.4vw, 56px);
       --radius: 22px;
     }
@@ -158,12 +158,24 @@
     }
     .stage.has-words .empty { opacity: 0; pointer-events: none; }
 
+    .letter-board {
+      position: relative;
+      z-index: 1;
+      width: fit-content;
+      max-width: 100%;
+      margin: 0 auto;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 2px;
+    }
+
     .numbers {
       display: grid;
       grid-template-columns: repeat(6, var(--cell));
-      justify-content: center;
+      justify-content: start;
       gap: 0;
-      margin: 0 auto 13px;
+      width: fit-content;
+      margin: 0 0 13px;
       opacity: 0;
       transform: translateY(-8px);
       transition: opacity .45s ease .15s, transform .45s cubic-bezier(.2,.8,.2,1) .15s;
@@ -177,16 +189,15 @@
       font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       transition: color .3s ease, transform .3s ease;
     }
-    .number-label.selected { color: var(--accent-2); transform: translateY(-2px) scale(1.13); }
+    .number-label.selected { color: var(--danger); transform: translateY(-2px) scale(1.13); }
 
     #words {
-      position: relative;
-      z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 10px;
     }
+    .stage.grid-mode #words { align-items: flex-start; }
 
     .word-row {
       min-height: 43px;
@@ -222,9 +233,9 @@
     .stage.grid-mode .letter { width: var(--cell); }
     .stage.grid-mode .letter.beyond-six { opacity: .22; }
     .stage.grid-mode .letter.selected {
-      color: var(--accent-2);
+      color: var(--danger);
       transform: scale(1.11);
-      text-shadow: 0 0 22px rgba(139,124,255,.55);
+      text-shadow: 0 0 22px rgba(255,86,86,.55);
     }
 
     .controls {
@@ -276,6 +287,27 @@
       color: #d7d2ff;
     }
     .die-btn:disabled { opacity: .28; cursor: default; }
+
+    .submit-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
+    .submit-btn {
+      height: 46px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--text);
+      color: #0b0d12;
+      min-width: 118px;
+      padding: 0 20px;
+      font-weight: 820;
+      cursor: pointer;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    .submit-btn:active { transform: scale(.96); }
+    .submit-btn:disabled { opacity: .34; cursor: default; }
 
     .reveal {
       position: relative;
@@ -364,8 +396,10 @@
 
     <section id="stage" class="stage" aria-live="polite">
       <div class="empty">Add each word as it is called out.<br>Then choose the number rolled on the die.</div>
-      <div id="numbers" class="numbers" aria-hidden="true"></div>
-      <div id="words"></div>
+      <div class="letter-board">
+        <div id="numbers" class="numbers" aria-hidden="true"></div>
+        <div id="words"></div>
+      </div>
       <div id="reveal" class="reveal">
         <small>Selected letters</small>
         <div id="answer" class="answer"></div>
@@ -375,6 +409,9 @@
     <section class="controls">
       <div class="control-label"><span>Die result</span><span>Choose 1–6</span></div>
       <div id="dice" class="dice-grid"></div>
+      <div class="submit-row">
+        <button id="submitBtn" class="submit-btn" type="button" disabled>Submit</button>
+      </div>
     </section>
 
     <div class="footer-actions">
@@ -386,6 +423,7 @@
     const state = {
       words: [],
       selected: null,
+      submitted: null,
       revealing: false
     };
 
@@ -399,6 +437,7 @@
     const wordInput = document.getElementById('wordInput');
     const undoBtn = document.getElementById('undoBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const submitBtn = document.getElementById('submitBtn');
 
     function cleanWord(value) {
       return value.trim().replace(/\s+/g, ' ');
@@ -420,7 +459,7 @@
       numbersEl.innerHTML = '';
       for (let i = 1; i <= 6; i++) {
         const el = document.createElement('div');
-        el.className = 'number-label' + (state.selected === i ? ' selected' : '');
+        el.className = 'number-label' + (state.submitted === i ? ' selected' : '');
         el.textContent = i;
         numbersEl.appendChild(el);
       }
@@ -433,10 +472,15 @@
         btn.type = 'button';
         btn.className = 'die-btn' + (state.selected === i ? ' active' : '');
         btn.textContent = i;
-        btn.disabled = state.words.length === 0 || state.revealing;
+        btn.disabled = state.revealing;
         btn.addEventListener('click', () => selectNumber(i));
         diceEl.appendChild(btn);
       }
+    }
+
+    function renderSubmit() {
+      const hasWords = state.words.length > 0 || cleanWord(wordInput.value).length > 0;
+      submitBtn.disabled = !hasWords || state.selected === null || state.revealing;
     }
 
     function renderWords() {
@@ -450,7 +494,7 @@
           const span = document.createElement('span');
           span.className = 'letter';
           if (charIndex >= 6) span.classList.add('beyond-six');
-          if (state.selected && charIndex === state.selected - 1) span.classList.add('selected');
+          if (state.submitted && charIndex === state.submitted - 1) span.classList.add('selected');
           span.textContent = char;
           row.appendChild(span);
         });
@@ -458,27 +502,27 @@
       });
 
       stage.classList.toggle('has-words', state.words.length > 0);
-      stage.classList.toggle('grid-mode', state.selected !== null);
+      stage.classList.toggle('grid-mode', state.submitted !== null);
       undoBtn.disabled = state.words.length === 0 || state.revealing;
-      resetBtn.disabled = state.words.length === 0 && state.selected === null;
+      resetBtn.disabled = state.words.length === 0 && state.selected === null && state.submitted === null;
     }
 
     function renderAnswer(animated = false) {
       answerEl.innerHTML = '';
-      if (!state.selected) {
+      if (!state.submitted) {
         revealEl.classList.remove('visible');
         return;
       }
 
       const letters = state.words.map(word => {
         const chars = displayChars(word);
-        return chars[state.selected - 1] || '·';
+        return chars[state.submitted - 1] || '·';
       });
 
       letters.forEach((char, index) => {
         const span = document.createElement('span');
         span.className = 'answer-char';
-        span.textContent = char;
+        span.textContent = char.toUpperCase();
         span.style.animationDelay = animated ? `${360 + index * 110}ms` : '0ms';
         answerEl.appendChild(span);
       });
@@ -490,31 +534,58 @@
       renderNumbers();
       renderWords();
       renderDice();
+      renderSubmit();
       renderAnswer(animatedAnswer);
     }
 
-    function addWord(raw) {
+    function addWord(raw, options = {}) {
       const word = cleanWord(raw);
-      if (!word) return;
+      if (!word) return false;
 
-      if (state.selected !== null) {
-        state.selected = null;
+      if (state.submitted !== null) {
+        state.submitted = null;
         revealEl.classList.remove('visible');
         answerEl.innerHTML = '';
       }
 
       state.words.push(word);
-      sync(false);
       wordInput.value = '';
-      wordInput.focus();
+      if (options.sync !== false) sync(false);
+      if (options.focus !== false) wordInput.focus();
+      return true;
     }
 
     function selectNumber(number) {
-      if (!state.words.length || state.revealing) return;
+      if (state.revealing) return;
+      state.selected = number;
+      if (state.submitted !== null) {
+        state.submitted = null;
+        revealEl.classList.remove('visible');
+        answerEl.innerHTML = '';
+      }
+      sync(false);
+    }
+
+    function submitReveal() {
+      if (state.revealing || state.selected === null) return;
+
+      if (cleanWord(wordInput.value)) {
+        addWord(wordInput.value, { sync: false, focus: false });
+      }
+
+      if (!state.words.length) {
+        sync(false);
+        return;
+      }
+
+      renderNumbers();
+      renderWords();
+      renderDice();
+      renderSubmit();
 
       const invalidRows = state.words
         .map((word, index) => ({ word, index }))
-        .filter(({ word }) => !eligible(word, number));
+        .filter(({ word }) => !eligible(word, state.selected));
 
       if (invalidRows.length) {
         const row = wordsEl.querySelector(`[data-row="${invalidRows[0].index}"]`);
@@ -523,25 +594,28 @@
           void row.offsetWidth;
           row.classList.add('shake');
         }
-        wordInput.placeholder = `A word is shorter than ${number} letters`;
+        wordInput.placeholder = `A word is shorter than ${state.selected} letters`;
         setTimeout(() => wordInput.placeholder = 'Type the next word…', 1700);
+        renderSubmit();
         return;
       }
 
       state.revealing = true;
-      state.selected = number;
+      state.submitted = state.selected;
       revealEl.classList.remove('visible');
       answerEl.innerHTML = '';
 
       renderNumbers();
       renderWords();
       renderDice();
+      renderSubmit();
 
       // Give the grid movement a beat before the final letters appear below.
       setTimeout(() => {
         renderAnswer(true);
         state.revealing = false;
         renderDice();
+        renderSubmit();
         undoBtn.disabled = false;
       }, 420);
     }
@@ -549,6 +623,7 @@
     function reset() {
       state.words = [];
       state.selected = null;
+      state.submitted = null;
       state.revealing = false;
       revealEl.classList.remove('visible');
       sync(false);
@@ -561,10 +636,14 @@
       addWord(wordInput.value);
     });
 
+    wordInput.addEventListener('input', renderSubmit);
+
+    submitBtn.addEventListener('click', submitReveal);
+
     undoBtn.addEventListener('click', () => {
       if (!state.words.length || state.revealing) return;
       state.words.pop();
-      state.selected = null;
+      state.submitted = null;
       revealEl.classList.remove('visible');
       sync(false);
       wordInput.focus();
