@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#090b10" />
+  <meta name="theme-color" content="#ffffff" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
@@ -11,16 +11,20 @@
   <style>
     :root {
       --marker: "Permanent Marker", "Segoe Print", cursive;
-      --bg: #090b10;
-      --panel: rgba(255,255,255,.055);
-      --panel-strong: rgba(255,255,255,.085);
-      --text: #f7f7fb;
-      --muted: #858b99;
-      --accent: #8b7cff;
-      --accent-2: #b6adff;
-      --danger: #ff5656;
+      --bg: #f5f5f5;
+      --surface: #ffffff;
+      --surface-soft: #f0f2f5;
+      --border: #dfe1e6;
+      --border-strong: #c7cbd1;
+      --text: #1c1c1c;
+      --muted: #5f6670;
+      --muted-light: #808791;
+      --accent: #0067e6;
+      --accent-soft: #e6f5ff;
+      --danger: #f53c3c;
+      --danger-soft: #fff2f0;
       --cell: clamp(34px, 9.4vw, 56px);
-      --radius: 22px;
+      --radius: 6px;
     }
 
     * { box-sizing: border-box; }
@@ -28,9 +32,7 @@
     body {
       margin: 0;
       min-height: 100svh;
-      background:
-        radial-gradient(circle at 50% -20%, rgba(139,124,255,.20), transparent 34%),
-        linear-gradient(180deg, #0d1017 0%, var(--bg) 34%, #07090d 100%);
+      background: var(--bg);
       color: var(--text);
       font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
       -webkit-font-smoothing: antialiased;
@@ -41,7 +43,7 @@
     button { -webkit-tap-highlight-color: transparent; }
 
     .app {
-      width: min(760px, 100%);
+      width: min(820px, 100%);
       min-height: 100svh;
       margin: 0 auto;
       padding: max(22px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
@@ -55,11 +57,13 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
     }
 
     .eyebrow {
       margin: 0 0 4px;
-      color: var(--muted);
+      color: var(--accent);
       font-size: 12px;
       font-weight: 700;
       letter-spacing: .16em;
@@ -70,29 +74,32 @@
       margin: 0;
       font-size: clamp(28px, 8vw, 44px);
       line-height: .98;
-      letter-spacing: -.045em;
+      letter-spacing: 0;
       font-weight: 760;
     }
 
     .icon-btn {
-      border: 1px solid rgba(255,255,255,.08);
-      background: var(--panel);
+      border: 1px solid var(--border);
+      background: var(--surface);
       color: var(--muted);
-      border-radius: 999px;
+      border-radius: var(--radius);
       height: 44px;
       padding: 0 15px;
       cursor: pointer;
       transition: transform .18s ease, background .18s ease, color .18s ease;
     }
     .icon-btn:active { transform: scale(.96); }
-    .icon-btn:not(:disabled):hover { background: var(--panel-strong); color: var(--text); }
+    .icon-btn:not(:disabled):hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
     .icon-btn:disabled { opacity: .35; cursor: default; }
 
     .entry-card {
-      border: 1px solid rgba(255,255,255,.075);
-      background: rgba(255,255,255,.045);
-      box-shadow: 0 18px 50px rgba(0,0,0,.22);
-      backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
       border-radius: var(--radius);
       padding: 10px;
       display: grid;
@@ -105,7 +112,7 @@
       height: 54px;
       border: 0;
       outline: 0;
-      border-radius: 15px;
+      border-radius: 4px;
       background: transparent;
       color: var(--text);
       padding: 0 13px;
@@ -114,7 +121,7 @@
       font-weight: 400;
     }
     #wordInput::placeholder {
-      color: #686e7b;
+      color: var(--muted-light);
       font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
       font-weight: 600;
     }
@@ -122,9 +129,9 @@
     .add-btn {
       height: 54px;
       border: 0;
-      border-radius: 15px;
-      background: var(--text);
-      color: #0b0d12;
+      border-radius: 4px;
+      background: var(--accent);
+      color: #fff;
       min-width: 72px;
       padding: 0 18px;
       font-weight: 800;
@@ -134,27 +141,22 @@
     .add-btn:active { transform: scale(.96); }
     .demo-press {
       transform: scale(.96);
-      box-shadow: 0 0 0 3px rgba(255,255,255,.12);
+      box-shadow: 0 0 0 3px rgba(0,103,230,.18);
     }
 
     .stage {
       flex: 1;
       min-height: 280px;
       position: relative;
-      border: 1px solid rgba(255,255,255,.065);
-      background: rgba(0,0,0,.14);
+      border: 1px solid var(--border);
+      background: var(--surface);
       border-radius: var(--radius);
       overflow: hidden;
       padding: 24px 18px 26px;
     }
 
     .stage::after {
-      content: "";
-      position: absolute;
-      inset: auto -20% -55% 10%;
-      height: 65%;
-      background: radial-gradient(circle, rgba(139,124,255,.1), transparent 66%);
-      pointer-events: none;
+      display: none;
     }
 
     .empty {
@@ -164,7 +166,7 @@
       place-items: center;
       padding: 40px;
       text-align: center;
-      color: #646a77;
+      color: var(--muted-light);
       font-size: 15px;
       line-height: 1.5;
       transition: opacity .2s ease;
@@ -188,9 +190,9 @@
       left: calc((var(--cursor-index, 1) - .5) * var(--cell));
       width: 24px;
       height: 24px;
-      border: 2px solid rgba(255,255,255,.9);
+      border: 2px solid var(--text);
       border-radius: 999px;
-      box-shadow: 0 0 18px rgba(255,255,255,.26);
+      box-shadow: none;
       opacity: 0;
       transform: translateX(-50%) scale(.72);
       transition:
@@ -207,7 +209,7 @@
     }
     .number-cursor.selected {
       border-color: var(--danger);
-      box-shadow: 0 0 22px rgba(255,86,86,.55);
+      box-shadow: 0 0 0 4px var(--danger-soft);
     }
 
     .numbers {
@@ -226,7 +228,7 @@
     .number-label {
       width: var(--cell);
       text-align: center;
-      color: #5f6675;
+      color: var(--muted);
       font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       transition: color .3s ease, transform .3s ease;
     }
@@ -276,12 +278,12 @@
     .stage.grid-mode .letter.selected {
       color: var(--danger);
       transform: scale(1.11);
-      text-shadow: 0 0 22px rgba(255,86,86,.55);
+      text-shadow: none;
     }
 
     .controls {
-      border: 1px solid rgba(255,255,255,.075);
-      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      background: var(--surface);
       border-radius: var(--radius);
       padding: 12px;
     }
@@ -300,7 +302,7 @@
       font-weight: 600;
       letter-spacing: 0;
       text-transform: none;
-      color: #5f6572;
+      color: var(--muted-light);
     }
 
     .dice-grid {
@@ -311,21 +313,25 @@
     .die-btn {
       aspect-ratio: 1 / 1;
       min-width: 0;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 15px;
-      background: rgba(255,255,255,.045);
-      color: #b9bec9;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface-soft);
+      color: var(--muted);
       font-size: clamp(17px, 5vw, 23px);
       font-weight: 760;
       cursor: pointer;
       transition: transform .18s ease, background .25s ease, color .25s ease, border-color .25s ease;
     }
     .die-btn:active { transform: scale(.93); }
-    .die-btn:hover:not(:disabled) { background: rgba(255,255,255,.08); color: white; }
+    .die-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
     .die-btn.active {
-      border-color: rgba(139,124,255,.7);
-      background: rgba(139,124,255,.18);
-      color: #d7d2ff;
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
     }
     .die-btn:disabled { opacity: .28; cursor: default; }
 
@@ -338,9 +344,9 @@
     .submit-btn {
       height: 46px;
       border: 0;
-      border-radius: 14px;
-      background: var(--text);
-      color: #0b0d12;
+      border-radius: 4px;
+      background: var(--accent);
+      color: #fff;
       min-width: 118px;
       padding: 0 20px;
       font-weight: 820;
@@ -380,7 +386,7 @@
       font-family: var(--marker);
       font-weight: 400;
       letter-spacing: 0;
-      color: white;
+      color: var(--text);
       text-transform: uppercase;
     }
     .answer-char {
