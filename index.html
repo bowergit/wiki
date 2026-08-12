@@ -57,12 +57,19 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      min-height: 32px;
+      min-height: 42px;
     }
 
     .synology-logo {
       display: block;
       width: 118px;
+      height: auto;
+      filter: brightness(0);
+    }
+
+    .db-logo {
+      display: block;
+      width: clamp(132px, 31vw, 190px);
       height: auto;
     }
 
@@ -432,6 +439,9 @@
 
     @media (max-width: 390px) {
       .app { padding-left: 12px; padding-right: 12px; gap: 13px; }
+      .brand-strip { gap: 10px; }
+      .synology-logo { width: 96px; }
+      .db-logo { width: 132px; }
       .stage { padding-left: 8px; padding-right: 8px; }
       .dice-grid { gap: 5px; }
       .die-btn { border-radius: 12px; }
@@ -446,6 +456,7 @@
   <main class="app">
     <div class="brand-strip">
       <img class="synology-logo" src="https://design.synology.com/img/logo/synology_logo_color.svg" alt="Synology" />
+      <img class="db-logo" src="assets/db-logo-green.png" alt="Daniel Bower Magician and Host" />
     </div>
 
     <header>
