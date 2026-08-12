@@ -184,10 +184,10 @@
 
     .number-cursor {
       position: absolute;
-      top: 2px;
+      top: 22px;
       left: calc((var(--cursor-index, 1) - .5) * var(--cell));
-      width: 17px;
-      height: 17px;
+      width: 24px;
+      height: 24px;
       border: 2px solid rgba(255,255,255,.9);
       border-radius: 999px;
       box-shadow: 0 0 18px rgba(255,255,255,.26);
@@ -230,7 +230,7 @@
       font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       transition: color .3s ease, transform .3s ease;
     }
-    .number-label.selected { color: var(--danger); transform: translateY(-2px) scale(1.13); }
+    .number-label.selected { color: var(--danger); transform: scale(1.13); }
 
     #words {
       display: flex;
