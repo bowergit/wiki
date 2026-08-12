@@ -52,6 +52,20 @@
       gap: 18px;
     }
 
+    .brand-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 32px;
+    }
+
+    .synology-logo {
+      display: block;
+      width: 118px;
+      height: auto;
+    }
+
     header {
       display: flex;
       align-items: center;
@@ -430,6 +444,10 @@
 </head>
 <body>
   <main class="app">
+    <div class="brand-strip">
+      <img class="synology-logo" src="https://design.synology.com/img/logo/synology_logo_color.svg" alt="Synology" />
+    </div>
+
     <header>
       <div>
         <p class="eyebrow">Wikipedia</p>
