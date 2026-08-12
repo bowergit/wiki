@@ -4,9 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#090b10" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
   <title>Letter Reveal</title>
   <style>
     :root {
+      --marker: "Permanent Marker", "Segoe Print", cursive;
       --bg: #090b10;
       --panel: rgba(255,255,255,.055);
       --panel-strong: rgba(255,255,255,.085);
@@ -66,8 +70,9 @@
       margin: 0;
       font-size: clamp(28px, 8vw, 44px);
       line-height: .98;
-      letter-spacing: -.045em;
-      font-weight: 760;
+      letter-spacing: 0;
+      font-family: var(--marker);
+      font-weight: 400;
     }
 
     .icon-btn {
@@ -106,7 +111,8 @@
       color: var(--text);
       padding: 0 13px;
       font-size: 18px;
-      font-weight: 600;
+      font-family: var(--marker);
+      font-weight: 400;
     }
     #wordInput::placeholder { color: #686e7b; }
 
@@ -118,7 +124,8 @@
       color: #0b0d12;
       min-width: 72px;
       padding: 0 18px;
-      font-weight: 800;
+      font-family: var(--marker);
+      font-weight: 400;
       cursor: pointer;
       transition: transform .18s ease, opacity .18s ease;
     }
@@ -185,7 +192,7 @@
       transition: opacity .45s ease .15s, transform .45s cubic-bezier(.2,.8,.2,1) .15s;
       pointer-events: none;
     }
-    .stage.grid-mode .numbers { opacity: 1; transform: translateY(0); }
+    .stage.numbers-mode .numbers { opacity: 1; transform: translateY(0); }
     .number-label {
       width: var(--cell);
       text-align: center;
@@ -211,8 +218,9 @@
       white-space: nowrap;
       font-size: clamp(24px, 7vw, 36px);
       line-height: 1.15;
-      font-weight: 650;
-      letter-spacing: -.035em;
+      font-family: var(--marker);
+      font-weight: 400;
+      letter-spacing: 0;
       transition: opacity .25s ease;
     }
 
@@ -222,16 +230,15 @@
       text-align: center;
       will-change: transform, opacity, color;
       transition:
-        width .62s cubic-bezier(.2,.78,.18,1),
+        width .72s cubic-bezier(.18,.92,.22,1),
         color .45s ease,
-        transform .45s cubic-bezier(.2,.78,.18,1),
+        transform .72s cubic-bezier(.18,.92,.22,1),
         text-shadow .45s ease;
     }
 
     .stage.grid-mode .word-row {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: clamp(23px, 6vw, 31px);
-      font-weight: 680;
+      font-size: clamp(24px, 6.4vw, 34px);
+      font-weight: 400;
       letter-spacing: 0;
     }
     .stage.grid-mode .letter { width: var(--cell); }
@@ -279,7 +286,8 @@
       background: rgba(255,255,255,.045);
       color: #b9bec9;
       font-size: clamp(17px, 5vw, 23px);
-      font-weight: 760;
+      font-family: var(--marker);
+      font-weight: 400;
       cursor: pointer;
       transition: transform .18s ease, background .25s ease, color .25s ease, border-color .25s ease;
     }
@@ -306,7 +314,8 @@
       color: #0b0d12;
       min-width: 118px;
       padding: 0 20px;
-      font-weight: 820;
+      font-family: var(--marker);
+      font-weight: 400;
       cursor: pointer;
       transition: transform .18s ease, opacity .18s ease;
     }
@@ -340,8 +349,9 @@
       min-height: 45px;
       font-size: clamp(34px, 10vw, 54px);
       line-height: 1;
-      font-weight: 820;
-      letter-spacing: .08em;
+      font-family: var(--marker);
+      font-weight: 400;
+      letter-spacing: 0;
       color: white;
       text-transform: uppercase;
     }
@@ -430,6 +440,11 @@
       words: [],
       selected: null,
       submitted: null,
+      gridActive: false,
+      numbersVisible: false,
+      highlightedNumber: null,
+      revealedRows: 0,
+      answerReady: false,
       revealing: false,
       demoing: false
     };
@@ -468,7 +483,7 @@
       numbersEl.innerHTML = '';
       for (let i = 1; i <= 6; i++) {
         const el = document.createElement('div');
-        el.className = 'number-label' + (state.submitted === i ? ' selected' : '');
+        el.className = 'number-label' + (state.highlightedNumber === i ? ' selected' : '');
         el.textContent = i;
         numbersEl.appendChild(el);
       }
@@ -503,8 +518,9 @@
         displayChars(word).forEach((char, charIndex) => {
           const span = document.createElement('span');
           span.className = 'letter';
+          span.dataset.key = `${rowIndex}-${charIndex}`;
           if (charIndex >= 6) span.classList.add('beyond-six');
-          if (state.submitted && charIndex === state.submitted - 1) span.classList.add('selected');
+          if (state.submitted && charIndex === state.submitted - 1 && rowIndex < state.revealedRows) span.classList.add('selected');
           span.textContent = char;
           row.appendChild(span);
         });
@@ -512,14 +528,15 @@
       });
 
       stage.classList.toggle('has-words', state.words.length > 0);
-      stage.classList.toggle('grid-mode', state.submitted !== null);
+      stage.classList.toggle('grid-mode', state.gridActive);
+      stage.classList.toggle('numbers-mode', state.numbersVisible);
       undoBtn.disabled = state.words.length === 0 || state.revealing || state.demoing;
       resetBtn.disabled = (state.words.length === 0 && state.selected === null && state.submitted === null) || state.demoing;
     }
 
     function renderAnswer(animated = false) {
       answerEl.innerHTML = '';
-      if (!state.submitted) {
+      if (!state.answerReady || !state.submitted) {
         revealEl.classList.remove('visible');
         return;
       }
@@ -540,6 +557,17 @@
       setTimeout(() => revealEl.classList.add('visible'), animated ? 300 : 0);
     }
 
+    function clearReveal() {
+      state.submitted = null;
+      state.gridActive = false;
+      state.numbersVisible = false;
+      state.highlightedNumber = null;
+      state.revealedRows = 0;
+      state.answerReady = false;
+      revealEl.classList.remove('visible');
+      answerEl.innerHTML = '';
+    }
+
     function sync(animatedAnswer = false) {
       renderNumbers();
       renderWords();
@@ -552,11 +580,7 @@
       const word = cleanWord(raw);
       if (!word) return false;
 
-      if (state.submitted !== null) {
-        state.submitted = null;
-        revealEl.classList.remove('visible');
-        answerEl.innerHTML = '';
-      }
+      if (state.submitted !== null || state.gridActive) clearReveal();
 
       state.words.push(word);
       wordInput.value = '';
@@ -568,15 +592,40 @@
     function selectNumber(number) {
       if (state.revealing) return;
       state.selected = number;
-      if (state.submitted !== null) {
-        state.submitted = null;
-        revealEl.classList.remove('visible');
-        answerEl.innerHTML = '';
-      }
+      if (state.submitted !== null || state.gridActive) clearReveal();
       sync(false);
     }
 
-    function submitReveal() {
+    function captureLetterPositions() {
+      const positions = new Map();
+      document.querySelectorAll('.letter').forEach(letter => {
+        positions.set(letter.dataset.key, letter.getBoundingClientRect());
+      });
+      return positions;
+    }
+
+    function animateLettersFrom(previousPositions) {
+      const letters = [...document.querySelectorAll('.letter')];
+      letters.forEach(letter => {
+        const previous = previousPositions.get(letter.dataset.key);
+        if (!previous) return;
+
+        const next = letter.getBoundingClientRect();
+        const dx = previous.left - next.left;
+        const dy = previous.top - next.top;
+        letter.style.transition = 'none';
+        letter.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+
+      document.body.offsetHeight;
+
+      letters.forEach(letter => {
+        letter.style.transition = '';
+        letter.style.transform = '';
+      });
+    }
+
+    async function submitReveal() {
       if (state.revealing || state.selected === null) return;
 
       if (cleanWord(wordInput.value)) {
@@ -611,7 +660,14 @@
       }
 
       state.revealing = true;
+      const submittedNumber = state.selected;
+      const beforeGrid = captureLetterPositions();
       state.submitted = state.selected;
+      state.gridActive = true;
+      state.numbersVisible = false;
+      state.highlightedNumber = null;
+      state.revealedRows = 0;
+      state.answerReady = false;
       revealEl.classList.remove('visible');
       answerEl.innerHTML = '';
 
@@ -619,24 +675,43 @@
       renderWords();
       renderDice();
       renderSubmit();
+      animateLettersFrom(beforeGrid);
 
-      // Give the grid movement a beat before the final letters appear below.
-      setTimeout(() => {
-        renderAnswer(true);
-        state.revealing = false;
-        renderDice();
-        renderSubmit();
-        undoBtn.disabled = false;
-      }, 420);
+      await sleep(880);
+      await sleep(260);
+
+      state.numbersVisible = true;
+      renderNumbers();
+      renderWords();
+      await sleep(520);
+
+      state.highlightedNumber = submittedNumber;
+      renderNumbers();
+      await sleep(430);
+
+      for (let i = 1; i <= state.words.length; i++) {
+        state.revealedRows = i;
+        renderWords();
+        await sleep(360);
+      }
+
+      await sleep(230);
+      state.answerReady = true;
+      renderAnswer(true);
+      await sleep(820 + state.words.length * 110);
+
+      state.revealing = false;
+      renderWords();
+      renderDice();
+      renderSubmit();
     }
 
     function reset() {
       state.words = [];
       state.selected = null;
-      state.submitted = null;
+      clearReveal();
       state.revealing = false;
       state.demoing = false;
-      revealEl.classList.remove('visible');
       sync(false);
       wordInput.value = '';
       wordInput.focus();
@@ -705,8 +780,7 @@
     undoBtn.addEventListener('click', () => {
       if (!state.words.length || state.revealing) return;
       state.words.pop();
-      state.submitted = null;
-      revealEl.classList.remove('visible');
+      clearReveal();
       sync(false);
       wordInput.focus();
     });
