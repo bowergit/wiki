@@ -123,6 +123,10 @@
       transition: transform .18s ease, opacity .18s ease;
     }
     .add-btn:active { transform: scale(.96); }
+    .demo-press {
+      transform: scale(.96);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.12);
+    }
 
     .stage {
       flex: 1;
@@ -355,6 +359,7 @@
     .footer-actions {
       display: flex;
       justify-content: center;
+      flex-wrap: wrap;
       gap: 10px;
       min-height: 44px;
     }
@@ -391,7 +396,7 @@
 
     <form id="wordForm" class="entry-card" autocomplete="off">
       <input id="wordInput" type="text" inputmode="text" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="Type the next word…" aria-label="Next word" />
-      <button class="add-btn" type="submit">Add</button>
+      <button id="addBtn" class="add-btn" type="submit">Add</button>
     </form>
 
     <section id="stage" class="stage" aria-live="polite">
@@ -415,6 +420,7 @@
     </section>
 
     <div class="footer-actions">
+      <button id="sampleBtn" class="icon-btn" type="button">Sample</button>
       <button id="undoBtn" class="icon-btn" type="button" disabled>Undo last word</button>
     </div>
   </main>
@@ -424,7 +430,8 @@
       words: [],
       selected: null,
       submitted: null,
-      revealing: false
+      revealing: false,
+      demoing: false
     };
 
     const stage = document.getElementById('stage');
@@ -435,9 +442,11 @@
     const answerEl = document.getElementById('answer');
     const wordForm = document.getElementById('wordForm');
     const wordInput = document.getElementById('wordInput');
+    const addBtn = document.getElementById('addBtn');
     const undoBtn = document.getElementById('undoBtn');
     const resetBtn = document.getElementById('resetBtn');
     const submitBtn = document.getElementById('submitBtn');
+    const sampleBtn = document.getElementById('sampleBtn');
 
     function cleanWord(value) {
       return value.trim().replace(/\s+/g, ' ');
@@ -472,7 +481,7 @@
         btn.type = 'button';
         btn.className = 'die-btn' + (state.selected === i ? ' active' : '');
         btn.textContent = i;
-        btn.disabled = state.revealing;
+        btn.disabled = state.revealing || state.demoing;
         btn.addEventListener('click', () => selectNumber(i));
         diceEl.appendChild(btn);
       }
@@ -480,7 +489,8 @@
 
     function renderSubmit() {
       const hasWords = state.words.length > 0 || cleanWord(wordInput.value).length > 0;
-      submitBtn.disabled = !hasWords || state.selected === null || state.revealing;
+      submitBtn.disabled = !hasWords || state.selected === null || state.revealing || state.demoing;
+      sampleBtn.disabled = state.revealing || state.demoing;
     }
 
     function renderWords() {
@@ -503,8 +513,8 @@
 
       stage.classList.toggle('has-words', state.words.length > 0);
       stage.classList.toggle('grid-mode', state.submitted !== null);
-      undoBtn.disabled = state.words.length === 0 || state.revealing;
-      resetBtn.disabled = state.words.length === 0 && state.selected === null && state.submitted === null;
+      undoBtn.disabled = state.words.length === 0 || state.revealing || state.demoing;
+      resetBtn.disabled = (state.words.length === 0 && state.selected === null && state.submitted === null) || state.demoing;
     }
 
     function renderAnswer(animated = false) {
@@ -625,10 +635,60 @@
       state.selected = null;
       state.submitted = null;
       state.revealing = false;
+      state.demoing = false;
       revealEl.classList.remove('visible');
       sync(false);
       wordInput.value = '';
       wordInput.focus();
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function flashPress(button) {
+      button.classList.add('demo-press');
+      await sleep(130);
+      button.classList.remove('demo-press');
+    }
+
+    async function typeSampleWord(word) {
+      wordInput.value = '';
+      wordInput.focus();
+
+      for (const char of charsOf(word)) {
+        wordInput.value += char;
+        renderSubmit();
+        await sleep(82);
+      }
+
+      await sleep(180);
+      await flashPress(addBtn);
+      addWord(wordInput.value, { focus: false });
+      await sleep(330);
+    }
+
+    async function playSample() {
+      if (state.demoing || state.revealing) return;
+
+      reset();
+      state.demoing = true;
+      sync(false);
+
+      await typeSampleWord('Manganese');
+      await typeSampleWord('Uranium');
+      await typeSampleWord('Reservoir');
+
+      await sleep(260);
+      const dieThree = [...diceEl.querySelectorAll('.die-btn')].find(btn => btn.textContent === '3');
+      if (dieThree) await flashPress(dieThree);
+      selectNumber(3);
+
+      await sleep(320);
+      state.demoing = false;
+      sync(false);
+      await flashPress(submitBtn);
+      submitReveal();
     }
 
     wordForm.addEventListener('submit', event => {
@@ -639,6 +699,8 @@
     wordInput.addEventListener('input', renderSubmit);
 
     submitBtn.addEventListener('click', submitReveal);
+
+    sampleBtn.addEventListener('click', playSample);
 
     undoBtn.addEventListener('click', () => {
       if (!state.words.length || state.revealing) return;
