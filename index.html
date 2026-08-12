@@ -151,7 +151,7 @@
       height: 54px;
       border: 0;
       border-radius: 4px;
-      background: var(--accent);
+      background: var(--text);
       color: #fff;
       min-width: 72px;
       padding: 0 18px;
@@ -302,75 +302,84 @@
       text-shadow: none;
     }
 
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .controls {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 12px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      padding: 0 2px;
     }
     .control-label {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin: 0 4px 10px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-    .control-label span:last-child {
-      font-weight: 600;
-      letter-spacing: 0;
-      text-transform: none;
-      color: var(--muted-light);
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
     }
 
     .dice-grid {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(6, 18px);
+      gap: 4px;
+      opacity: .42;
+      transition: opacity .2s ease;
     }
+    .controls:hover .dice-grid,
+    .controls:focus-within .dice-grid { opacity: .86; }
     .die-btn {
-      aspect-ratio: 1 / 1;
+      width: 18px;
+      height: 18px;
       min-width: 0;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      background: var(--surface-soft);
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
       color: var(--muted);
-      font-size: clamp(17px, 5vw, 23px);
-      font-weight: 760;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 18px;
+      padding: 0;
       cursor: pointer;
       transition: transform .18s ease, background .25s ease, color .25s ease, border-color .25s ease;
     }
     .die-btn:active { transform: scale(.93); }
     .die-btn:hover:not(:disabled) {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent);
+      background: var(--surface-soft);
+      color: var(--text);
     }
     .die-btn.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent);
+      background: var(--border-strong);
+      color: var(--text);
     }
     .die-btn:disabled { opacity: .28; cursor: default; }
 
     .submit-row {
       display: flex;
       justify-content: flex-end;
-      margin-top: 10px;
+      margin-top: 0;
     }
 
     .submit-btn {
-      height: 46px;
+      height: 38px;
       border: 0;
       border-radius: 4px;
-      background: var(--accent);
+      background: var(--text);
       color: #fff;
-      min-width: 118px;
-      padding: 0 20px;
-      font-weight: 820;
+      min-width: 96px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 760;
       cursor: pointer;
       transition: transform .18s ease, opacity .18s ease;
     }
@@ -443,8 +452,7 @@
       .synology-logo { width: 96px; }
       .db-logo { width: 132px; }
       .stage { padding-left: 8px; padding-right: 8px; }
-      .dice-grid { gap: 5px; }
-      .die-btn { border-radius: 12px; }
+      .controls { gap: 9px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -473,7 +481,7 @@
     </form>
 
     <section id="stage" class="stage" aria-live="polite">
-      <div class="empty">Add each word as it is called out.<br>Then choose the number rolled on the die.</div>
+      <div class="empty">Add each word as it is called out.</div>
       <div class="letter-board">
         <div id="numberCursor" class="number-cursor" aria-hidden="true"></div>
         <div id="numbers" class="numbers" aria-hidden="true"></div>
@@ -486,7 +494,7 @@
     </section>
 
     <section class="controls">
-      <div class="control-label"><span>Die result</span><span>Choose 1–6</span></div>
+      <div class="control-label">Number</div>
       <div id="dice" class="dice-grid"></div>
       <div class="submit-row">
         <button id="submitBtn" class="submit-btn" type="button" disabled>Submit</button>
@@ -511,8 +519,11 @@
       revealedRows: 0,
       answerReady: false,
       revealing: false,
-      demoing: false
+      demoing: false,
+      correcting: false
     };
+
+    const WIKIPEDIA_API = 'https://en.wikipedia.org/w/api.php';
 
     const stage = document.getElementById('stage');
     const numberCursor = document.getElementById('numberCursor');
@@ -531,6 +542,65 @@
 
     function cleanWord(value) {
       return value.trim().replace(/\s+/g, ' ');
+    }
+
+    function titleKey(value) {
+      return cleanWord(value).replace(/_/g, ' ').toLocaleLowerCase();
+    }
+
+    async function fetchWikipedia(params) {
+      const url = new URL(WIKIPEDIA_API);
+      const finalParams = { format: 'json', origin: '*', ...params };
+      Object.entries(finalParams).forEach(([key, value]) => url.searchParams.set(key, value));
+
+      const response = await fetch(url.toString(), { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Wikipedia returned ${response.status}`);
+      return response.json();
+    }
+
+    function firstKnownPage(data) {
+      const pages = data?.query?.pages || {};
+      return Object.values(pages).find(page => !Object.prototype.hasOwnProperty.call(page, 'missing'));
+    }
+
+    async function findWikipediaTitle(value) {
+      const data = await fetchWikipedia({
+        action: 'query',
+        redirects: '1',
+        titles: value
+      });
+      const page = firstKnownPage(data);
+      if (!page?.title) return null;
+
+      const normalised = data.query?.normalized?.find(item => titleKey(item.from) === titleKey(value))?.to || value;
+      const redirect = data.query?.redirects?.find(item => titleKey(item.from) === titleKey(normalised));
+      return redirect ? redirect.from : page.title;
+    }
+
+    async function resolveWikipediaTitle(value) {
+      const word = cleanWord(value);
+      if (!word) return '';
+
+      try {
+        const direct = await findWikipediaTitle(word);
+        if (direct) return direct;
+
+        const search = await fetchWikipedia({
+          action: 'query',
+          list: 'search',
+          srnamespace: '0',
+          srlimit: '1',
+          srsearch: word
+        });
+        const suggestion = search.query?.searchinfo?.suggestion;
+        if (suggestion) {
+          return await findWikipediaTitle(suggestion) || cleanWord(suggestion);
+        }
+
+        return search.query?.search?.[0]?.title || word;
+      } catch (error) {
+        return word;
+      }
     }
 
     function charsOf(word) {
@@ -578,8 +648,9 @@
 
     function renderSubmit() {
       const hasWords = state.words.length > 0 || cleanWord(wordInput.value).length > 0;
-      submitBtn.disabled = !hasWords || state.selected === null || state.revealing || state.demoing;
-      sampleBtn.disabled = state.revealing || state.demoing;
+      addBtn.disabled = state.revealing || state.demoing || state.correcting;
+      submitBtn.disabled = !hasWords || state.selected === null || state.revealing || state.demoing || state.correcting;
+      sampleBtn.disabled = state.revealing || state.demoing || state.correcting;
     }
 
     function renderWords() {
@@ -652,9 +723,16 @@
       renderAnswer(animatedAnswer);
     }
 
-    function addWord(raw, options = {}) {
-      const word = cleanWord(raw);
+    async function addWord(raw, options = {}) {
+      let word = cleanWord(raw);
       if (!word) return false;
+
+      if (options.correct !== false) {
+        state.correcting = true;
+        renderSubmit();
+        word = await resolveWikipediaTitle(word);
+        state.correcting = false;
+      }
 
       if (state.submitted !== null || state.gridActive) clearReveal();
 
@@ -702,10 +780,11 @@
     }
 
     async function submitReveal() {
-      if (state.revealing || state.selected === null) return;
+      if (state.revealing || state.selected === null || state.correcting) return;
 
       if (cleanWord(wordInput.value)) {
-        addWord(wordInput.value, { sync: false, focus: false });
+        const added = await addWord(wordInput.value, { sync: false, focus: false });
+        if (!added) return;
       }
 
       if (!state.words.length) {
@@ -801,6 +880,7 @@
       clearReveal();
       state.revealing = false;
       state.demoing = false;
+      state.correcting = false;
       sync(false);
       wordInput.value = '';
       wordInput.focus();
@@ -828,7 +908,7 @@
 
       await sleep(180);
       await flashPress(addBtn);
-      addWord(wordInput.value, { focus: false });
+      await addWord(wordInput.value, { focus: false, correct: false });
       await sleep(330);
     }
 
@@ -848,9 +928,9 @@
       wordInput.focus();
     }
 
-    wordForm.addEventListener('submit', event => {
+    wordForm.addEventListener('submit', async event => {
       event.preventDefault();
-      addWord(wordInput.value);
+      await addWord(wordInput.value);
     });
 
     wordInput.addEventListener('input', renderSubmit);
