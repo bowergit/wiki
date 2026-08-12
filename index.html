@@ -179,7 +179,35 @@
       margin: 0 auto;
       overflow-x: auto;
       overflow-y: hidden;
-      padding-bottom: 2px;
+      padding: 28px 0 2px;
+    }
+
+    .number-cursor {
+      position: absolute;
+      top: 2px;
+      left: calc((var(--cursor-index, 1) - .5) * var(--cell));
+      width: 17px;
+      height: 17px;
+      border: 2px solid rgba(255,255,255,.9);
+      border-radius: 999px;
+      box-shadow: 0 0 18px rgba(255,255,255,.26);
+      opacity: 0;
+      transform: translateX(-50%) scale(.72);
+      transition:
+        left .62s cubic-bezier(.2,.82,.2,1),
+        opacity .22s ease,
+        transform .22s ease,
+        border-color .3s ease,
+        box-shadow .3s ease;
+      pointer-events: none;
+    }
+    .number-cursor.visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+    .number-cursor.selected {
+      border-color: var(--danger);
+      box-shadow: 0 0 22px rgba(255,86,86,.55);
     }
 
     .numbers {
@@ -412,6 +440,7 @@
     <section id="stage" class="stage" aria-live="polite">
       <div class="empty">Add each word as it is called out.<br>Then choose the number rolled on the die.</div>
       <div class="letter-board">
+        <div id="numberCursor" class="number-cursor" aria-hidden="true"></div>
         <div id="numbers" class="numbers" aria-hidden="true"></div>
         <div id="words"></div>
       </div>
@@ -443,6 +472,7 @@
       gridActive: false,
       numbersVisible: false,
       highlightedNumber: null,
+      scannerPosition: null,
       revealedRows: 0,
       answerReady: false,
       revealing: false,
@@ -450,6 +480,7 @@
     };
 
     const stage = document.getElementById('stage');
+    const numberCursor = document.getElementById('numberCursor');
     const wordsEl = document.getElementById('words');
     const numbersEl = document.getElementById('numbers');
     const diceEl = document.getElementById('dice');
@@ -486,6 +517,14 @@
         el.className = 'number-label' + (state.highlightedNumber === i ? ' selected' : '');
         el.textContent = i;
         numbersEl.appendChild(el);
+      }
+    }
+
+    function renderNumberCursor() {
+      numberCursor.classList.toggle('visible', state.scannerPosition !== null);
+      numberCursor.classList.toggle('selected', state.highlightedNumber !== null);
+      if (state.scannerPosition !== null) {
+        numberCursor.style.setProperty('--cursor-index', state.scannerPosition);
       }
     }
 
@@ -562,6 +601,7 @@
       state.gridActive = false;
       state.numbersVisible = false;
       state.highlightedNumber = null;
+      state.scannerPosition = null;
       state.revealedRows = 0;
       state.answerReady = false;
       revealEl.classList.remove('visible');
@@ -570,6 +610,7 @@
 
     function sync(animatedAnswer = false) {
       renderNumbers();
+      renderNumberCursor();
       renderWords();
       renderDice();
       renderSubmit();
@@ -666,6 +707,7 @@
       state.gridActive = true;
       state.numbersVisible = false;
       state.highlightedNumber = null;
+      state.scannerPosition = null;
       state.revealedRows = 0;
       state.answerReady = false;
       revealEl.classList.remove('visible');
@@ -682,11 +724,23 @@
 
       state.numbersVisible = true;
       renderNumbers();
+      renderNumberCursor();
       renderWords();
-      await sleep(1000);
+      await sleep(500);
+
+      state.scannerPosition = 1;
+      renderNumberCursor();
+      await sleep(submittedNumber === 1 ? 1000 : 700);
+
+      for (let i = 2; i <= submittedNumber; i++) {
+        state.scannerPosition = i;
+        renderNumberCursor();
+        await sleep(i === submittedNumber ? 1000 : 700);
+      }
 
       state.highlightedNumber = submittedNumber;
       renderNumbers();
+      renderNumberCursor();
       await sleep(500);
 
       for (let i = 1; i <= state.words.length; i++) {
@@ -754,16 +808,9 @@
       await typeSampleWord('Uranium');
       await typeSampleWord('Reservoir');
 
-      await sleep(260);
-      const dieThree = [...diceEl.querySelectorAll('.die-btn')].find(btn => btn.textContent === '3');
-      if (dieThree) await flashPress(dieThree);
-      selectNumber(3);
-
-      await sleep(320);
       state.demoing = false;
       sync(false);
-      await flashPress(submitBtn);
-      submitReveal();
+      wordInput.focus();
     }
 
     wordForm.addEventListener('submit', event => {
