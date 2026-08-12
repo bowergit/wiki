@@ -70,9 +70,8 @@
       margin: 0;
       font-size: clamp(28px, 8vw, 44px);
       line-height: .98;
-      letter-spacing: 0;
-      font-family: var(--marker);
-      font-weight: 400;
+      letter-spacing: -.045em;
+      font-weight: 760;
     }
 
     .icon-btn {
@@ -114,7 +113,11 @@
       font-family: var(--marker);
       font-weight: 400;
     }
-    #wordInput::placeholder { color: #686e7b; }
+    #wordInput::placeholder {
+      color: #686e7b;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      font-weight: 600;
+    }
 
     .add-btn {
       height: 54px;
@@ -124,8 +127,7 @@
       color: #0b0d12;
       min-width: 72px;
       padding: 0 18px;
-      font-family: var(--marker);
-      font-weight: 400;
+      font-weight: 800;
       cursor: pointer;
       transition: transform .18s ease, opacity .18s ease;
     }
@@ -230,9 +232,9 @@
       text-align: center;
       will-change: transform, opacity, color;
       transition:
-        width .72s cubic-bezier(.18,.92,.22,1),
+        width 1.35s cubic-bezier(.18,.92,.22,1),
         color .45s ease,
-        transform .72s cubic-bezier(.18,.92,.22,1),
+        transform 1.35s cubic-bezier(.18,.92,.22,1),
         text-shadow .45s ease;
     }
 
@@ -286,8 +288,7 @@
       background: rgba(255,255,255,.045);
       color: #b9bec9;
       font-size: clamp(17px, 5vw, 23px);
-      font-family: var(--marker);
-      font-weight: 400;
+      font-weight: 760;
       cursor: pointer;
       transition: transform .18s ease, background .25s ease, color .25s ease, border-color .25s ease;
     }
@@ -314,8 +315,7 @@
       color: #0b0d12;
       min-width: 118px;
       padding: 0 20px;
-      font-family: var(--marker);
-      font-weight: 400;
+      font-weight: 820;
       cursor: pointer;
       transition: transform .18s ease, opacity .18s ease;
     }
@@ -677,25 +677,25 @@
       renderSubmit();
       animateLettersFrom(beforeGrid);
 
-      await sleep(880);
-      await sleep(260);
+      await sleep(1450);
+      await sleep(350);
 
       state.numbersVisible = true;
       renderNumbers();
       renderWords();
-      await sleep(520);
+      await sleep(1000);
 
       state.highlightedNumber = submittedNumber;
       renderNumbers();
-      await sleep(430);
+      await sleep(500);
 
       for (let i = 1; i <= state.words.length; i++) {
         state.revealedRows = i;
         renderWords();
-        await sleep(360);
+        await sleep(500);
       }
 
-      await sleep(230);
+      await sleep(500);
       state.answerReady = true;
       renderAnswer(true);
       await sleep(820 + state.words.length * 110);
