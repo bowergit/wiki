@@ -634,6 +634,65 @@
       .tool-dock { left: 12px; }
     }
 
+    @media (max-height: 560px) and (max-width: 520px) {
+      .app.reveal-mode {
+        height: 100svh;
+        min-height: 0;
+        padding: max(6px, env(safe-area-inset-top)) 10px max(6px, env(safe-area-inset-bottom));
+        gap: 5px;
+        overflow: hidden;
+        --cell: clamp(25px, 11vw, 42px);
+      }
+      .app.reveal-mode .brand-strip {
+        min-height: 30px;
+      }
+      .app.reveal-mode .synology-logo {
+        width: 86px;
+      }
+      .app.reveal-mode .db-logo {
+        width: 112px;
+      }
+      .app.reveal-mode .stage {
+        height: calc(100svh - 45px);
+        padding: 20px 8px 8px;
+      }
+      .app.reveal-mode .letter-board {
+        padding-top: 28px;
+      }
+      .app.reveal-mode .number-cursor {
+        top: 29px;
+        width: 28px;
+        height: 28px;
+      }
+      .app.reveal-mode .numbers {
+        margin-bottom: 5px;
+      }
+      .app.reveal-mode .number-label {
+        font-size: clamp(16px, 4.6vw, 20px);
+      }
+      .app.reveal-mode .stage.grid-mode .word-row {
+        font-size: clamp(24px, 8.4vw, 34px);
+        min-height: clamp(26px, 6.4vh, 35px);
+      }
+      .app.reveal-mode .reveal {
+        min-height: clamp(76px, 17vh, 96px);
+        padding-top: 4px;
+      }
+      .app.reveal-mode .answer {
+        min-height: 48px;
+        font-size: clamp(46px, 15vw, 64px);
+      }
+      .app.reveal-mode .reveal small {
+        font-size: clamp(16px, 4.6vw, 22px);
+        margin-bottom: 4px;
+      }
+      .app.reveal-mode .reveal-reset {
+        right: 10px;
+        bottom: 10px;
+        height: 38px;
+      }
+    }
+
     @media (max-width: 520px) {
       header {
         display: grid;
