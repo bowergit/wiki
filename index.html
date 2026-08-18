@@ -99,6 +99,14 @@
       font-weight: 760;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
     .icon-btn {
       border: 1px solid var(--border);
       background: var(--surface);
@@ -205,55 +213,35 @@
       padding: 28px 0 2px;
     }
 
-    .number-cursor {
+    .chosen-number {
       position: absolute;
-      top: 22px;
-      left: calc((var(--cursor-index, 1) - .5) * var(--cell));
-      width: 24px;
-      height: 24px;
-      border: 2px solid var(--text);
-      border-radius: 999px;
-      box-shadow: none;
+      z-index: 3;
+      left: 50%;
+      bottom: 20px;
       opacity: 0;
-      transform: translateX(-50%) scale(.72);
+      color: var(--text);
+      font-size: clamp(54px, 18vw, 96px);
+      line-height: 1;
+      font-weight: 820;
+      transform: translate(-50%, 18px) scale(.92);
       transition:
-        left .62s cubic-bezier(.2,.82,.2,1),
         opacity .22s ease,
-        transform .22s ease,
-        border-color .3s ease,
-        box-shadow .3s ease;
+        transform .8s cubic-bezier(.18,.92,.22,1),
+        font-size .8s cubic-bezier(.18,.92,.22,1);
       pointer-events: none;
     }
-    .number-cursor.visible {
+    .stage.show-number .chosen-number {
       opacity: 1;
-      transform: translateX(-50%) scale(1);
+      transform: translate(-50%, 0) scale(1);
     }
-    .number-cursor.selected {
-      border-color: var(--danger);
-      box-shadow: 0 0 0 4px var(--danger-soft);
+    .stage.number-parked .chosen-number {
+      left: auto;
+      right: 18px;
+      top: 15px;
+      bottom: auto;
+      font-size: clamp(24px, 7vw, 38px);
+      transform: translate(0, 0) scale(1);
     }
-
-    .numbers {
-      display: grid;
-      grid-template-columns: repeat(6, var(--cell));
-      justify-content: start;
-      gap: 0;
-      width: fit-content;
-      margin: 0 0 13px;
-      opacity: 0;
-      transform: translateY(-8px);
-      transition: opacity .45s ease .15s, transform .45s cubic-bezier(.2,.8,.2,1) .15s;
-      pointer-events: none;
-    }
-    .stage.numbers-mode .numbers { opacity: 1; transform: translateY(0); }
-    .number-label {
-      width: var(--cell);
-      text-align: center;
-      color: var(--muted);
-      font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      transition: color .3s ease, transform .3s ease;
-    }
-    .number-label.selected { color: var(--danger); transform: scale(1.13); }
 
     #words {
       display: flex;
@@ -314,78 +302,6 @@
       border: 0;
     }
 
-    .controls {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 12px;
-      padding: 0 2px;
-    }
-    .control-label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-    }
-
-    .dice-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 18px);
-      gap: 4px;
-      opacity: .42;
-      transition: opacity .2s ease;
-    }
-    .controls:hover .dice-grid,
-    .controls:focus-within .dice-grid { opacity: .86; }
-    .die-btn {
-      width: 18px;
-      height: 18px;
-      min-width: 0;
-      border: 0;
-      border-radius: 999px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 700;
-      line-height: 18px;
-      padding: 0;
-      cursor: pointer;
-      transition: transform .18s ease, background .25s ease, color .25s ease, border-color .25s ease;
-    }
-    .die-btn:active { transform: scale(.93); }
-    .die-btn:hover:not(:disabled) {
-      background: var(--surface-soft);
-      color: var(--text);
-    }
-    .die-btn.active {
-      background: var(--border-strong);
-      color: var(--text);
-    }
-    .die-btn:disabled { opacity: .28; cursor: default; }
-
-    .submit-row {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 0;
-    }
-
-    .submit-btn {
-      height: 38px;
-      border: 0;
-      border-radius: 4px;
-      background: var(--text);
-      color: #fff;
-      min-width: 96px;
-      padding: 0 16px;
-      font-size: 14px;
-      font-weight: 760;
-      cursor: pointer;
-      transition: transform .18s ease, opacity .18s ease;
-    }
-    .submit-btn:active { transform: scale(.96); }
-    .submit-btn:disabled { opacity: .34; cursor: default; }
-
     .reveal {
       position: relative;
       z-index: 2;
@@ -430,12 +346,90 @@
       to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
     }
 
-    .footer-actions {
+    .tool-dock {
+      position: fixed;
+      left: 18px;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      z-index: 20;
       display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
+      align-items: flex-end;
       gap: 10px;
-      min-height: 44px;
+    }
+
+    .tool-toggle {
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+    .tool-toggle:active { transform: scale(.96); }
+
+    .tool-panel {
+      width: min(260px, calc(100vw - 80px));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+      display: grid;
+      gap: 8px;
+    }
+    .tool-panel[hidden] { display: none; }
+    .tool-panel .icon-btn {
+      width: 100%;
+      text-align: left;
+      justify-content: flex-start;
+    }
+
+    .tutorial {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(245,245,245,.72);
+    }
+    .tutorial[hidden] { display: none; }
+    .tutorial-card {
+      width: min(460px, 100%);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 34px rgba(0,0,0,.16);
+      padding: 18px;
+    }
+    .tutorial-count {
+      margin: 0 0 8px;
+      color: var(--muted-light);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .tutorial-title {
+      margin: 0 0 10px;
+      font-size: 22px;
+      line-height: 1.15;
+      font-weight: 760;
+    }
+    .tutorial-body {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .tutorial-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
     }
 
     .shake { animation: shake .35s ease; }
@@ -452,7 +446,26 @@
       .synology-logo { width: 96px; }
       .db-logo { width: 132px; }
       .stage { padding-left: 8px; padding-right: 8px; }
-      .controls { gap: 9px; }
+      .header-actions .icon-btn { height: 38px; padding: 0 10px; }
+      .tool-dock { left: 12px; }
+    }
+
+    @media (max-width: 520px) {
+      header {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+      .header-actions {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: nowrap;
+      }
+      .header-actions .icon-btn {
+        height: 38px;
+        padding: 0 12px;
+        white-space: nowrap;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -472,7 +485,10 @@
         <p class="eyebrow">Wikipedia</p>
         <h1>Letter Reveal</h1>
       </div>
-      <button id="resetBtn" class="icon-btn" type="button" disabled>Reset</button>
+      <div class="header-actions">
+        <button id="undoBtn" class="icon-btn" type="button" disabled>Undo last word</button>
+        <button id="resetBtn" class="icon-btn" type="button" disabled>Reset</button>
+      </div>
     </header>
 
     <form id="wordForm" class="entry-card" autocomplete="off">
@@ -483,28 +499,35 @@
     <section id="stage" class="stage" aria-live="polite">
       <div class="empty">Add each word as it is called out.</div>
       <div class="letter-board">
-        <div id="numberCursor" class="number-cursor" aria-hidden="true"></div>
-        <div id="numbers" class="numbers" aria-hidden="true"></div>
         <div id="words"></div>
       </div>
+      <div id="chosenNumber" class="chosen-number" aria-hidden="true"></div>
       <div id="reveal" class="reveal">
         <small>Selected letters</small>
         <div id="answer" class="answer"></div>
       </div>
     </section>
 
-    <section class="controls">
-      <div class="control-label">Number</div>
-      <div id="dice" class="dice-grid"></div>
-      <div class="submit-row">
-        <button id="submitBtn" class="submit-btn" type="button" disabled>Submit</button>
+    <div class="tool-dock">
+      <button id="toolsToggle" class="tool-toggle" type="button" aria-expanded="false" aria-controls="toolPanel" aria-label="Open tools">+</button>
+      <div id="toolPanel" class="tool-panel" hidden>
+        <button id="sampleBtn" class="icon-btn" type="button">Sample words</button>
+        <button id="tutorialBtn" class="icon-btn" type="button">Tutorial for Stuart</button>
+      </div>
+    </div>
+
+    <section id="tutorial" class="tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+      <div class="tutorial-card">
+        <p id="tutorialCount" class="tutorial-count"></p>
+        <h2 id="tutorialTitle" class="tutorial-title"></h2>
+        <p id="tutorialBody" class="tutorial-body"></p>
+        <div class="tutorial-actions">
+          <button id="tutorialCloseBtn" class="icon-btn" type="button">Close</button>
+          <button id="tutorialBackBtn" class="icon-btn" type="button">Back</button>
+          <button id="tutorialNextBtn" class="icon-btn" type="button">Next</button>
+        </div>
       </div>
     </section>
-
-    <div class="footer-actions">
-      <button id="sampleBtn" class="icon-btn" type="button">Sample</button>
-      <button id="undoBtn" class="icon-btn" type="button" disabled>Undo last word</button>
-    </div>
   </main>
 
   <script>
@@ -513,23 +536,46 @@
       selected: null,
       submitted: null,
       gridActive: false,
-      numbersVisible: false,
-      highlightedNumber: null,
-      scannerPosition: null,
+      triggerNumber: null,
+      numberVisible: false,
+      numberParked: false,
       revealedRows: 0,
       answerReady: false,
       revealing: false,
       demoing: false,
-      correcting: false
+      correcting: false,
+      toolsOpen: false,
+      tutorialOpen: false,
+      tutorialStep: 0
     };
 
     const WIKIPEDIA_API = 'https://en.wikipedia.org/w/api.php';
+    const tutorialSteps = [
+      {
+        title: 'Type the Wikipedia titles',
+        body: 'Click in the word box, type the title as it is read out, then press Add. The page quietly tries to correct close Wikipedia spelling mistakes before it writes the word underneath.'
+      },
+      {
+        title: 'Keep the page boring',
+        body: 'Nothing magical should happen while the words are being entered. If one word is wrong, use Undo last word. If you need to start again, use Reset.'
+      },
+      {
+        title: 'Use the secret trigger',
+        body: 'When all the words are on the page, press the die result on the keyboard: 1, 2, 3, 4, 5, or 6. You do not need to click into any field first.'
+      },
+      {
+        title: 'Let the animation finish',
+        body: 'The chosen digit appears large at the bottom, moves to the top right, then the letters line up and reveal themselves. Do not click anything while that is happening.'
+      },
+      {
+        title: 'Practise with sample words',
+        body: 'Open the tools button, press Sample words, wait for Manganese, Uranium, and Reservoir to be typed in, then press 3 on the keyboard.'
+      }
+    ];
 
     const stage = document.getElementById('stage');
-    const numberCursor = document.getElementById('numberCursor');
     const wordsEl = document.getElementById('words');
-    const numbersEl = document.getElementById('numbers');
-    const diceEl = document.getElementById('dice');
+    const chosenNumberEl = document.getElementById('chosenNumber');
     const revealEl = document.getElementById('reveal');
     const answerEl = document.getElementById('answer');
     const wordForm = document.getElementById('wordForm');
@@ -537,8 +583,17 @@
     const addBtn = document.getElementById('addBtn');
     const undoBtn = document.getElementById('undoBtn');
     const resetBtn = document.getElementById('resetBtn');
-    const submitBtn = document.getElementById('submitBtn');
+    const toolsToggle = document.getElementById('toolsToggle');
+    const toolPanel = document.getElementById('toolPanel');
     const sampleBtn = document.getElementById('sampleBtn');
+    const tutorialBtn = document.getElementById('tutorialBtn');
+    const tutorialEl = document.getElementById('tutorial');
+    const tutorialCountEl = document.getElementById('tutorialCount');
+    const tutorialTitleEl = document.getElementById('tutorialTitle');
+    const tutorialBodyEl = document.getElementById('tutorialBody');
+    const tutorialCloseBtn = document.getElementById('tutorialCloseBtn');
+    const tutorialBackBtn = document.getElementById('tutorialBackBtn');
+    const tutorialNextBtn = document.getElementById('tutorialNextBtn');
 
     function cleanWord(value) {
       return value.trim().replace(/\s+/g, ' ');
@@ -615,42 +670,33 @@
       return charsOf(word.replace(/\s/g, ''));
     }
 
-    function renderNumbers() {
-      numbersEl.innerHTML = '';
-      for (let i = 1; i <= 6; i++) {
-        const el = document.createElement('div');
-        el.className = 'number-label' + (state.highlightedNumber === i ? ' selected' : '');
-        el.textContent = i;
-        numbersEl.appendChild(el);
-      }
+    function renderKeyNumber() {
+      chosenNumberEl.textContent = state.triggerNumber || '';
+      stage.classList.toggle('show-number', state.numberVisible);
+      stage.classList.toggle('number-parked', state.numberParked);
     }
 
-    function renderNumberCursor() {
-      numberCursor.classList.toggle('visible', state.scannerPosition !== null);
-      numberCursor.classList.toggle('selected', state.highlightedNumber !== null);
-      if (state.scannerPosition !== null) {
-        numberCursor.style.setProperty('--cursor-index', state.scannerPosition);
-      }
-    }
-
-    function renderDice() {
-      diceEl.innerHTML = '';
-      for (let i = 1; i <= 6; i++) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'die-btn' + (state.selected === i ? ' active' : '');
-        btn.textContent = i;
-        btn.disabled = state.revealing || state.demoing;
-        btn.addEventListener('click', () => selectNumber(i));
-        diceEl.appendChild(btn);
-      }
-    }
-
-    function renderSubmit() {
-      const hasWords = state.words.length > 0 || cleanWord(wordInput.value).length > 0;
+    function renderControls() {
       addBtn.disabled = state.revealing || state.demoing || state.correcting;
-      submitBtn.disabled = !hasWords || state.selected === null || state.revealing || state.demoing || state.correcting;
       sampleBtn.disabled = state.revealing || state.demoing || state.correcting;
+      tutorialBtn.disabled = state.revealing || state.demoing || state.correcting;
+      toolsToggle.disabled = state.revealing || state.demoing || state.correcting;
+      toolPanel.hidden = !state.toolsOpen;
+      toolsToggle.setAttribute('aria-expanded', String(state.toolsOpen));
+      toolsToggle.textContent = state.toolsOpen ? '-' : '+';
+      toolsToggle.setAttribute('aria-label', state.toolsOpen ? 'Close tools' : 'Open tools');
+    }
+
+    function renderTutorial() {
+      tutorialEl.hidden = !state.tutorialOpen;
+      if (!state.tutorialOpen) return;
+
+      const step = tutorialSteps[state.tutorialStep];
+      tutorialCountEl.textContent = `Step ${state.tutorialStep + 1} of ${tutorialSteps.length}`;
+      tutorialTitleEl.textContent = step.title;
+      tutorialBodyEl.textContent = step.body;
+      tutorialBackBtn.disabled = state.tutorialStep === 0;
+      tutorialNextBtn.textContent = state.tutorialStep === tutorialSteps.length - 1 ? 'Replay' : 'Next';
     }
 
     function renderWords() {
@@ -674,9 +720,8 @@
 
       stage.classList.toggle('has-words', state.words.length > 0);
       stage.classList.toggle('grid-mode', state.gridActive);
-      stage.classList.toggle('numbers-mode', state.numbersVisible);
       undoBtn.disabled = state.words.length === 0 || state.revealing || state.demoing;
-      resetBtn.disabled = (state.words.length === 0 && state.selected === null && state.submitted === null) || state.demoing;
+      resetBtn.disabled = (state.words.length === 0 && state.submitted === null && state.triggerNumber === null) || state.demoing;
     }
 
     function renderAnswer(animated = false) {
@@ -705,9 +750,9 @@
     function clearReveal() {
       state.submitted = null;
       state.gridActive = false;
-      state.numbersVisible = false;
-      state.highlightedNumber = null;
-      state.scannerPosition = null;
+      state.triggerNumber = null;
+      state.numberVisible = false;
+      state.numberParked = false;
       state.revealedRows = 0;
       state.answerReady = false;
       revealEl.classList.remove('visible');
@@ -715,11 +760,10 @@
     }
 
     function sync(animatedAnswer = false) {
-      renderNumbers();
-      renderNumberCursor();
+      renderKeyNumber();
       renderWords();
-      renderDice();
-      renderSubmit();
+      renderControls();
+      renderTutorial();
       renderAnswer(animatedAnswer);
     }
 
@@ -729,7 +773,7 @@
 
       if (options.correct !== false) {
         state.correcting = true;
-        renderSubmit();
+        renderControls();
         word = await resolveWikipediaTitle(word);
         state.correcting = false;
       }
@@ -741,13 +785,6 @@
       if (options.sync !== false) sync(false);
       if (options.focus !== false) wordInput.focus();
       return true;
-    }
-
-    function selectNumber(number) {
-      if (state.revealing) return;
-      state.selected = number;
-      if (state.submitted !== null || state.gridActive) clearReveal();
-      sync(false);
     }
 
     function captureLetterPositions() {
@@ -779,8 +816,30 @@
       });
     }
 
-    async function submitReveal() {
-      if (state.revealing || state.selected === null || state.correcting) return;
+    function animateNumberFrom(previous) {
+      const next = chosenNumberEl.getBoundingClientRect();
+      const dx = previous.left - next.left;
+      const dy = previous.top - next.top;
+      chosenNumberEl.style.transition = 'none';
+      chosenNumberEl.style.transform = `translate(${dx}px, ${dy}px) scale(1)`;
+
+      document.body.offsetHeight;
+
+      chosenNumberEl.style.transition = '';
+      chosenNumberEl.style.transform = '';
+    }
+
+    function keyNumber(event) {
+      if (/^[1-6]$/.test(event.key)) return Number(event.key);
+      const match = /^Numpad([1-6])$/.exec(event.code);
+      return match ? Number(match[1]) : null;
+    }
+
+    async function submitReveal(number) {
+      if (state.revealing || state.correcting || state.demoing) return;
+
+      const selectedNumber = Number(number);
+      if (!Number.isInteger(selectedNumber) || selectedNumber < 1 || selectedNumber > 6) return;
 
       if (cleanWord(wordInput.value)) {
         const added = await addWord(wordInput.value, { sync: false, focus: false });
@@ -792,14 +851,12 @@
         return;
       }
 
-      renderNumbers();
       renderWords();
-      renderDice();
-      renderSubmit();
+      renderControls();
 
       const invalidRows = state.words
         .map((word, index) => ({ word, index }))
-        .filter(({ word }) => !eligible(word, state.selected));
+        .filter(({ word }) => !eligible(word, selectedNumber));
 
       if (invalidRows.length) {
         const row = wordsEl.querySelector(`[data-row="${invalidRows[0].index}"]`);
@@ -808,53 +865,42 @@
           void row.offsetWidth;
           row.classList.add('shake');
         }
-        wordInput.placeholder = `A word is shorter than ${state.selected} letters`;
+        wordInput.placeholder = `A word is shorter than ${selectedNumber} letters`;
         setTimeout(() => wordInput.placeholder = 'Type the next word…', 1700);
-        renderSubmit();
+        renderControls();
         return;
       }
 
       state.revealing = true;
-      const submittedNumber = state.selected;
-      const beforeGrid = captureLetterPositions();
-      state.submitted = state.selected;
-      state.gridActive = true;
-      state.numbersVisible = false;
-      state.highlightedNumber = null;
-      state.scannerPosition = null;
+      state.triggerNumber = selectedNumber;
+      state.numberVisible = true;
+      state.numberParked = false;
+      state.submitted = selectedNumber;
+      state.gridActive = false;
       state.revealedRows = 0;
       state.answerReady = false;
       revealEl.classList.remove('visible');
       answerEl.innerHTML = '';
 
-      renderNumbers();
+      renderKeyNumber();
       renderWords();
-      renderDice();
-      renderSubmit();
+      renderControls();
+
+      await sleep(650);
+
+      const numberBeforePark = chosenNumberEl.getBoundingClientRect();
+      state.numberParked = true;
+      renderKeyNumber();
+      animateNumberFrom(numberBeforePark);
+
+      await sleep(920);
+
+      const beforeGrid = captureLetterPositions();
+      state.gridActive = true;
+      renderWords();
       animateLettersFrom(beforeGrid);
 
-      await sleep(1450);
-      await sleep(350);
-
-      state.numbersVisible = true;
-      renderNumbers();
-      renderNumberCursor();
-      renderWords();
-      await sleep(500);
-
-      state.scannerPosition = 1;
-      renderNumberCursor();
-      await sleep(submittedNumber === 1 ? 1000 : 700);
-
-      for (let i = 2; i <= submittedNumber; i++) {
-        state.scannerPosition = i;
-        renderNumberCursor();
-        await sleep(i === submittedNumber ? 1000 : 700);
-      }
-
-      state.highlightedNumber = submittedNumber;
-      renderNumbers();
-      renderNumberCursor();
+      await sleep(1500);
       await sleep(500);
 
       for (let i = 1; i <= state.words.length; i++) {
@@ -870,8 +916,7 @@
 
       state.revealing = false;
       renderWords();
-      renderDice();
-      renderSubmit();
+      renderControls();
     }
 
     function reset() {
@@ -902,7 +947,7 @@
 
       for (const char of charsOf(word)) {
         wordInput.value += char;
-        renderSubmit();
+        renderControls();
         await sleep(82);
       }
 
@@ -917,6 +962,7 @@
 
       reset();
       state.demoing = true;
+      state.toolsOpen = false;
       sync(false);
 
       await typeSampleWord('Manganese');
@@ -928,16 +974,55 @@
       wordInput.focus();
     }
 
+    function openTutorial() {
+      state.tutorialOpen = true;
+      state.tutorialStep = 0;
+      state.toolsOpen = false;
+      sync(false);
+    }
+
+    function closeTutorial() {
+      state.tutorialOpen = false;
+      sync(false);
+      wordInput.focus();
+    }
+
+    function nextTutorialStep() {
+      if (state.tutorialStep === tutorialSteps.length - 1) {
+        state.tutorialStep = 0;
+      } else {
+        state.tutorialStep += 1;
+      }
+      sync(false);
+    }
+
+    function previousTutorialStep() {
+      state.tutorialStep = Math.max(0, state.tutorialStep - 1);
+      sync(false);
+    }
+
+    function shouldLetInputKeepNumber(event) {
+      return document.activeElement === wordInput && cleanWord(wordInput.value).length > 0 && !event.ctrlKey && !event.metaKey && !event.altKey;
+    }
+
     wordForm.addEventListener('submit', async event => {
       event.preventDefault();
       await addWord(wordInput.value);
     });
 
-    wordInput.addEventListener('input', renderSubmit);
-
-    submitBtn.addEventListener('click', submitReveal);
+    wordInput.addEventListener('input', renderControls);
 
     sampleBtn.addEventListener('click', playSample);
+
+    toolsToggle.addEventListener('click', () => {
+      state.toolsOpen = !state.toolsOpen;
+      sync(false);
+    });
+
+    tutorialBtn.addEventListener('click', openTutorial);
+    tutorialCloseBtn.addEventListener('click', closeTutorial);
+    tutorialBackBtn.addEventListener('click', previousTutorialStep);
+    tutorialNextBtn.addEventListener('click', nextTutorialStep);
 
     undoBtn.addEventListener('click', () => {
       if (!state.words.length || state.revealing) return;
@@ -949,9 +1034,17 @@
 
     resetBtn.addEventListener('click', reset);
 
-    renderNumbers();
-    renderDice();
-    renderWords();
+    document.addEventListener('keydown', event => {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || state.tutorialOpen) return;
+
+      const number = keyNumber(event);
+      if (!number || shouldLetInputKeepNumber(event)) return;
+
+      event.preventDefault();
+      submitReveal(number);
+    });
+
+    sync(false);
     wordInput.focus();
   </script>
 </body>
