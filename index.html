@@ -7,7 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
-  <title>Letter Reveal</title>
+  <title>Prize Picker</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='white'/%3E%3Ctext x='32' y='47' text-anchor='middle' font-family='Arial, Helvetica, sans-serif' font-size='44' font-weight='800' fill='black'%3ES%3C/text%3E%3C/svg%3E">
   <style>
     :root {
       --marker: "Permanent Marker", "Segoe Print", cursive;
@@ -273,13 +274,13 @@
       position: absolute;
       z-index: 3;
       left: 50%;
-      top: 44%;
+      bottom: clamp(52px, 8vh, 84px);
       opacity: 0;
       color: var(--text);
       font-size: clamp(54px, 18vw, 96px);
       line-height: 1;
       font-weight: 820;
-      transform: translate(-50%, calc(-50% + 24px)) scale(.92);
+      transform: translate(-50%, 24px) scale(.92);
       transition:
         opacity .3s ease,
         left .92s cubic-bezier(.18,.92,.22,1),
@@ -291,22 +292,23 @@
     }
     .stage.show-number .chosen-number {
       opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
+      transform: translate(-50%, 0) scale(1);
     }
     .stage.number-parked .chosen-number {
       left: auto;
       right: 18px;
       top: 15px;
+      bottom: auto;
       font-size: clamp(24px, 7vw, 38px);
       transform: translate(0, 0) scale(1);
     }
 
     .number-cursor {
       position: absolute;
-      top: 46px;
+      top: 42px;
       left: calc((var(--cursor-index, 1) - .5) * var(--cell));
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       border: 2px solid var(--text);
       border-radius: 999px;
       opacity: 0;
@@ -348,7 +350,7 @@
       width: var(--cell);
       text-align: center;
       color: var(--muted);
-      font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font: 800 clamp(16px, 4vw, 24px)/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       transition: color .3s ease, transform .3s ease;
     }
     .number-label.selected { color: var(--danger); transform: scale(1.13); }
@@ -398,9 +400,9 @@
     }
     .stage.grid-mode .letter { width: var(--cell); }
     .stage.grid-mode .letter.beyond-six {
-      width: 0;
-      opacity: 0;
-      overflow: hidden;
+      width: auto;
+      min-width: 0;
+      opacity: .22;
     }
     .stage.grid-mode .letter.selected {
       color: var(--danger);
@@ -441,11 +443,11 @@
     }
     .reveal small {
       color: var(--muted);
-      font-size: 11px;
+      font-size: clamp(18px, 4.8vw, 30px);
       font-weight: 800;
-      letter-spacing: .18em;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
     }
     .answer {
       min-height: 74px;
@@ -535,19 +537,57 @@
       position: fixed;
       inset: 0;
       z-index: 40;
-      display: grid;
-      place-items: center;
-      padding: 18px;
-      background: rgba(245,245,245,.72);
+      background: transparent;
     }
     .tutorial[hidden] { display: none; }
+    .tutorial-spotlight {
+      position: fixed;
+      left: var(--spot-left, 18px);
+      top: var(--spot-top, 18px);
+      width: var(--spot-width, 120px);
+      height: var(--spot-height, 70px);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      box-shadow: 0 0 0 9999px rgba(245,245,245,.76);
+      pointer-events: none;
+      transition:
+        left .28s cubic-bezier(.2,.8,.2,1),
+        top .28s cubic-bezier(.2,.8,.2,1),
+        width .28s cubic-bezier(.2,.8,.2,1),
+        height .28s cubic-bezier(.2,.8,.2,1);
+    }
+    .tutorial-pointer {
+      position: fixed;
+      left: var(--pointer-left, 50%);
+      top: var(--pointer-top, 50%);
+      width: 2px;
+      height: var(--pointer-height, 32px);
+      background: var(--accent);
+      pointer-events: none;
+    }
+    .tutorial-pointer::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -1px;
+      width: 10px;
+      height: 10px;
+      border-right: 2px solid var(--accent);
+      border-bottom: 2px solid var(--accent);
+      transform: translateX(-50%) rotate(45deg);
+      background: transparent;
+    }
     .tutorial-card {
       width: min(460px, 100%);
+      position: fixed;
+      left: var(--card-left, 18px);
+      top: var(--card-top, 18px);
       border: 1px solid var(--border);
       background: var(--surface);
       border-radius: var(--radius);
       box-shadow: 0 12px 34px rgba(0,0,0,.16);
       padding: 18px;
+      transition: left .28s cubic-bezier(.2,.8,.2,1), top .28s cubic-bezier(.2,.8,.2,1);
     }
     .tutorial-count {
       margin: 0 0 8px;
@@ -627,7 +667,7 @@
     <header>
       <div>
         <p class="eyebrow">Wikipedia</p>
-        <h1>Letter Reveal</h1>
+        <h1>Prize Picker</h1>
       </div>
       <div class="header-actions">
         <button id="undoBtn" class="icon-btn" type="button" disabled>Undo last word</button>
@@ -649,7 +689,7 @@
       </div>
       <div id="chosenNumber" class="chosen-number" aria-hidden="true"></div>
       <div id="reveal" class="reveal">
-        <small>Selected letters</small>
+        <small>You won</small>
         <div id="answer" class="answer"></div>
       </div>
       <button id="revealResetBtn" class="icon-btn reveal-reset" type="button">Reset</button>
@@ -664,6 +704,8 @@
     </div>
 
     <section id="tutorial" class="tutorial" hidden role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+      <div id="tutorialSpotlight" class="tutorial-spotlight" aria-hidden="true"></div>
+      <div id="tutorialPointer" class="tutorial-pointer" aria-hidden="true"></div>
       <div class="tutorial-card">
         <p id="tutorialCount" class="tutorial-count"></p>
         <h2 id="tutorialTitle" class="tutorial-title"></h2>
@@ -705,23 +747,18 @@
     const tutorialSteps = [
       {
         title: 'Type the Wikipedia titles',
-        body: 'Click in the word box, type the title as it is read out, then press Add. The page quietly tries to correct close Wikipedia spelling mistakes before it writes the word underneath.'
+        body: 'Click in this box, type the title as it is read out, then press Add. The page quietly corrects close Wikipedia spelling mistakes before it writes the title underneath.',
+        target: '#wordForm'
       },
       {
-        title: 'Keep the page boring',
-        body: 'Nothing magical should happen while the words are being entered. If one word is wrong, use Undo last word. If you need to start again, use Reset.'
+        title: 'Check the list',
+        body: 'Each title appears in this white area. If the last one is wrong, use Undo last word. If you need to start again, use Reset.',
+        target: '#stage'
       },
       {
-        title: 'Use the secret trigger',
-        body: 'When all the words are on the page, press the die result on the keyboard: 1, 2, 3, 4, 5, or 6. You do not need to click into any field first.'
-      },
-      {
-        title: 'Let the animation finish',
-        body: 'The chosen digit appears large in the centre, moves to the top right, then the letters line up and reveal themselves. Do not click anything while that is happening.'
-      },
-      {
-        title: 'Practise with sample words',
-        body: 'Open the tools button, press Sample words, wait for Manganese, Uranium, and Reservoir to be typed in, then press 3 on the keyboard.'
+        title: 'Trigger the prize',
+        body: 'When all 3 Wikipedia titles are on screen, press the chosen number on the keyboard: 1, 2, 3, 4, 5, or 6. You do not need to click into a field first.',
+        target: '#stage'
       }
     ];
 
@@ -744,6 +781,7 @@
     const sampleBtn = document.getElementById('sampleBtn');
     const tutorialBtn = document.getElementById('tutorialBtn');
     const tutorialEl = document.getElementById('tutorial');
+    const tutorialCardEl = tutorialEl.querySelector('.tutorial-card');
     const tutorialCountEl = document.getElementById('tutorialCount');
     const tutorialTitleEl = document.getElementById('tutorialTitle');
     const tutorialBodyEl = document.getElementById('tutorialBody');
@@ -874,6 +912,40 @@
       tutorialBodyEl.textContent = step.body;
       tutorialBackBtn.disabled = state.tutorialStep === 0;
       tutorialNextBtn.textContent = state.tutorialStep === tutorialSteps.length - 1 ? 'Replay' : 'Next';
+      positionTutorialOverlay();
+      requestAnimationFrame(positionTutorialOverlay);
+    }
+
+    function positionTutorialOverlay() {
+      if (!state.tutorialOpen) return;
+
+      const step = tutorialSteps[state.tutorialStep];
+      const target = document.querySelector(step.target) || stage;
+      const rect = target.getBoundingClientRect();
+      const pad = 8;
+      const spotLeft = Math.max(8, rect.left - pad);
+      const spotTop = Math.max(8, rect.top - pad);
+      const spotWidth = Math.min(window.innerWidth - spotLeft - 8, rect.width + pad * 2);
+      const spotHeight = Math.min(window.innerHeight - spotTop - 8, rect.height + pad * 2);
+      const cardWidth = Math.min(420, window.innerWidth - 28);
+      const cardHeight = tutorialCardEl.offsetHeight || 210;
+      const belowTop = spotTop + spotHeight + 18;
+      const useBelow = belowTop + cardHeight <= window.innerHeight - 14;
+      const cardTop = useBelow ? belowTop : Math.max(14, spotTop - cardHeight - 18);
+      const cardLeft = Math.min(window.innerWidth - cardWidth - 14, Math.max(14, rect.left));
+      const pointerLeft = Math.min(window.innerWidth - 18, Math.max(18, rect.left + rect.width / 2));
+      const pointerTop = useBelow ? spotTop + spotHeight : cardTop + cardHeight;
+      const pointerHeight = Math.max(18, Math.abs(cardTop - pointerTop));
+
+      tutorialEl.style.setProperty('--spot-left', `${spotLeft}px`);
+      tutorialEl.style.setProperty('--spot-top', `${spotTop}px`);
+      tutorialEl.style.setProperty('--spot-width', `${spotWidth}px`);
+      tutorialEl.style.setProperty('--spot-height', `${spotHeight}px`);
+      tutorialEl.style.setProperty('--card-left', `${cardLeft}px`);
+      tutorialEl.style.setProperty('--card-top', `${cardTop}px`);
+      tutorialEl.style.setProperty('--pointer-left', `${pointerLeft}px`);
+      tutorialEl.style.setProperty('--pointer-top', `${pointerTop}px`);
+      tutorialEl.style.setProperty('--pointer-height', `${pointerHeight}px`);
     }
 
     function renderWords() {
@@ -1248,6 +1320,8 @@
 
     resetBtn.addEventListener('click', reset);
     revealResetBtn.addEventListener('click', reset);
+    window.addEventListener('resize', positionTutorialOverlay);
+    window.addEventListener('scroll', positionTutorialOverlay, true);
 
     document.addEventListener('keydown', event => {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || state.tutorialOpen) return;
