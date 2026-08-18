@@ -51,6 +51,15 @@
       flex-direction: column;
       gap: 18px;
     }
+    .app.reveal-mode {
+      width: min(980px, 100%);
+      gap: 12px;
+    }
+    .app.reveal-mode header,
+    .app.reveal-mode .entry-card,
+    .app.reveal-mode .tool-dock {
+      display: none;
+    }
 
     .brand-strip {
       display: flex;
@@ -146,8 +155,8 @@
       color: var(--text);
       padding: 0 13px;
       font-size: 18px;
-      font-family: var(--marker);
-      font-weight: 400;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      font-weight: 600;
     }
     #wordInput::placeholder {
       color: var(--muted-light);
@@ -183,6 +192,10 @@
       overflow: hidden;
       padding: 24px 18px 26px;
     }
+    .app.reveal-mode .stage {
+      min-height: calc(100svh - 112px);
+      padding: clamp(28px, 5vw, 46px) 18px 34px;
+    }
 
     .stage::after {
       display: none;
@@ -210,20 +223,20 @@
       margin: 0 auto;
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 28px 0 2px;
+      padding: 52px 0 2px;
     }
 
     .chosen-number {
       position: absolute;
       z-index: 3;
       left: 50%;
-      bottom: 20px;
+      top: 50%;
       opacity: 0;
       color: var(--text);
       font-size: clamp(54px, 18vw, 96px);
       line-height: 1;
       font-weight: 820;
-      transform: translate(-50%, 18px) scale(.92);
+      transform: translate(-50%, calc(-50% + 24px)) scale(.92);
       transition:
         opacity .22s ease,
         transform .8s cubic-bezier(.18,.92,.22,1),
@@ -232,16 +245,67 @@
     }
     .stage.show-number .chosen-number {
       opacity: 1;
-      transform: translate(-50%, 0) scale(1);
+      transform: translate(-50%, -50%) scale(1);
     }
     .stage.number-parked .chosen-number {
       left: auto;
       right: 18px;
       top: 15px;
-      bottom: auto;
       font-size: clamp(24px, 7vw, 38px);
       transform: translate(0, 0) scale(1);
     }
+
+    .number-cursor {
+      position: absolute;
+      top: 46px;
+      left: calc((var(--cursor-index, 1) - .5) * var(--cell));
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--text);
+      border-radius: 999px;
+      opacity: 0;
+      transform: translateX(-50%) scale(.72);
+      transition:
+        left .62s cubic-bezier(.2,.82,.2,1),
+        opacity .22s ease,
+        transform .22s ease,
+        border-color .3s ease,
+        box-shadow .3s ease;
+      pointer-events: none;
+    }
+    .number-cursor.visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+    .number-cursor.selected {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 4px var(--danger-soft);
+    }
+
+    .numbers {
+      display: grid;
+      grid-template-columns: repeat(6, var(--cell));
+      justify-content: start;
+      gap: 0;
+      width: fit-content;
+      margin: 0 0 13px;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity .45s ease .15s, transform .45s cubic-bezier(.2,.8,.2,1) .15s;
+      pointer-events: none;
+    }
+    .stage.numbers-mode .numbers {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .number-label {
+      width: var(--cell);
+      text-align: center;
+      color: var(--muted);
+      font: 700 13px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      transition: color .3s ease, transform .3s ease;
+    }
+    .number-label.selected { color: var(--danger); transform: scale(1.13); }
 
     #words {
       display: flex;
@@ -499,6 +563,8 @@
     <section id="stage" class="stage" aria-live="polite">
       <div class="empty">Add each word as it is called out.</div>
       <div class="letter-board">
+        <div id="numberCursor" class="number-cursor" aria-hidden="true"></div>
+        <div id="numbers" class="numbers" aria-hidden="true"></div>
         <div id="words"></div>
       </div>
       <div id="chosenNumber" class="chosen-number" aria-hidden="true"></div>
@@ -539,6 +605,10 @@
       triggerNumber: null,
       numberVisible: false,
       numberParked: false,
+      numbersVisible: false,
+      highlightedNumber: null,
+      scannerPosition: null,
+      revealMode: false,
       revealedRows: 0,
       answerReady: false,
       revealing: false,
@@ -573,8 +643,11 @@
       }
     ];
 
+    const app = document.querySelector('.app');
     const stage = document.getElementById('stage');
     const wordsEl = document.getElementById('words');
+    const numberCursor = document.getElementById('numberCursor');
+    const numbersEl = document.getElementById('numbers');
     const chosenNumberEl = document.getElementById('chosenNumber');
     const revealEl = document.getElementById('reveal');
     const answerEl = document.getElementById('answer');
@@ -672,8 +745,28 @@
 
     function renderKeyNumber() {
       chosenNumberEl.textContent = state.triggerNumber || '';
+      app.classList.toggle('reveal-mode', state.revealMode);
       stage.classList.toggle('show-number', state.numberVisible);
       stage.classList.toggle('number-parked', state.numberParked);
+      stage.classList.toggle('numbers-mode', state.numbersVisible);
+    }
+
+    function renderNumbers() {
+      numbersEl.innerHTML = '';
+      for (let i = 1; i <= 6; i++) {
+        const el = document.createElement('div');
+        el.className = 'number-label' + (state.highlightedNumber === i ? ' selected' : '');
+        el.textContent = i;
+        numbersEl.appendChild(el);
+      }
+    }
+
+    function renderNumberCursor() {
+      numberCursor.classList.toggle('visible', state.scannerPosition !== null);
+      numberCursor.classList.toggle('selected', state.highlightedNumber !== null);
+      if (state.scannerPosition !== null) {
+        numberCursor.style.setProperty('--cursor-index', state.scannerPosition);
+      }
     }
 
     function renderControls() {
@@ -753,6 +846,10 @@
       state.triggerNumber = null;
       state.numberVisible = false;
       state.numberParked = false;
+      state.numbersVisible = false;
+      state.highlightedNumber = null;
+      state.scannerPosition = null;
+      state.revealMode = false;
       state.revealedRows = 0;
       state.answerReady = false;
       revealEl.classList.remove('visible');
@@ -761,6 +858,8 @@
 
     function sync(animatedAnswer = false) {
       renderKeyNumber();
+      renderNumbers();
+      renderNumberCursor();
       renderWords();
       renderControls();
       renderTutorial();
@@ -875,6 +974,10 @@
       state.triggerNumber = selectedNumber;
       state.numberVisible = true;
       state.numberParked = false;
+      state.numbersVisible = false;
+      state.highlightedNumber = null;
+      state.scannerPosition = null;
+      state.revealMode = false;
       state.submitted = selectedNumber;
       state.gridActive = false;
       state.revealedRows = 0;
@@ -886,14 +989,15 @@
       renderWords();
       renderControls();
 
-      await sleep(650);
+      await sleep(1450);
 
       const numberBeforePark = chosenNumberEl.getBoundingClientRect();
       state.numberParked = true;
+      state.revealMode = true;
       renderKeyNumber();
       animateNumberFrom(numberBeforePark);
 
-      await sleep(920);
+      await sleep(1050);
 
       const beforeGrid = captureLetterPositions();
       state.gridActive = true;
@@ -901,6 +1005,28 @@
       animateLettersFrom(beforeGrid);
 
       await sleep(1500);
+      await sleep(500);
+
+      state.numbersVisible = true;
+      renderKeyNumber();
+      renderNumbers();
+      renderNumberCursor();
+      renderWords();
+      await sleep(500);
+
+      state.scannerPosition = 1;
+      renderNumberCursor();
+      await sleep(selectedNumber === 1 ? 1000 : 700);
+
+      for (let i = 2; i <= selectedNumber; i++) {
+        state.scannerPosition = i;
+        renderNumberCursor();
+        await sleep(i === selectedNumber ? 1000 : 700);
+      }
+
+      state.highlightedNumber = selectedNumber;
+      renderNumbers();
+      renderNumberCursor();
       await sleep(500);
 
       for (let i = 1; i <= state.words.length; i++) {
