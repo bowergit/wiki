@@ -23,7 +23,7 @@
       --accent-soft: #e6f5ff;
       --danger: #f53c3c;
       --danger-soft: #fff2f0;
-      --cell: clamp(34px, 9.4vw, 56px);
+      --cell: clamp(34px, 13vw, 74px);
       --radius: 6px;
     }
 
@@ -50,15 +50,31 @@
       display: flex;
       flex-direction: column;
       gap: 18px;
+      overflow-x: hidden;
+      transition: width .65s cubic-bezier(.18,.92,.22,1), gap .45s ease;
     }
     .app.reveal-mode {
       width: min(980px, 100%);
-      gap: 12px;
+      padding: max(10px, env(safe-area-inset-top)) 12px max(8px, env(safe-area-inset-bottom));
+      gap: 8px;
+      --cell: clamp(30px, 12vw, 66px);
     }
     .app.reveal-mode header,
-    .app.reveal-mode .entry-card,
+    .app.reveal-mode .entry-card {
+      max-height: 0;
+      margin: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(-46px);
+      pointer-events: none;
+    }
     .app.reveal-mode .tool-dock {
-      display: none;
+      opacity: 0;
+      transform: translateY(-28px);
+      pointer-events: none;
     }
 
     .brand-strip {
@@ -89,6 +105,15 @@
       gap: 16px;
       border-bottom: 1px solid var(--border);
       padding-bottom: 16px;
+      max-height: 120px;
+      opacity: 1;
+      transform: translateY(0);
+      transition:
+        max-height .55s cubic-bezier(.2,.8,.2,1),
+        padding .55s cubic-bezier(.2,.8,.2,1),
+        border-width .55s ease,
+        opacity .32s ease,
+        transform .48s cubic-bezier(.2,.8,.2,1);
     }
 
     .eyebrow {
@@ -143,6 +168,15 @@
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 9px;
+      max-height: 86px;
+      opacity: 1;
+      transform: translateY(0);
+      transition:
+        max-height .55s cubic-bezier(.2,.8,.2,1),
+        padding .55s cubic-bezier(.2,.8,.2,1),
+        border-width .55s ease,
+        opacity .32s ease,
+        transform .48s cubic-bezier(.2,.8,.2,1);
     }
 
     #wordInput {
@@ -184,17 +218,21 @@
 
     .stage {
       flex: 1;
-      min-height: 280px;
+      min-height: clamp(360px, 56svh, 680px);
       position: relative;
       border: 1px solid var(--border);
       background: var(--surface);
       border-radius: var(--radius);
       overflow: hidden;
       padding: 24px 18px 26px;
+      transition:
+        min-height .65s cubic-bezier(.18,.92,.22,1),
+        padding .65s cubic-bezier(.18,.92,.22,1);
     }
     .app.reveal-mode .stage {
-      min-height: calc(100svh - 112px);
-      padding: clamp(28px, 5vw, 46px) 18px 34px;
+      height: calc(100svh - 104px);
+      min-height: 0;
+      padding: clamp(30px, 5vw, 52px) clamp(12px, 3vw, 28px) 34px;
     }
 
     .stage::after {
@@ -218,19 +256,24 @@
     .letter-board {
       position: relative;
       z-index: 1;
-      width: fit-content;
+      width: 100%;
       max-width: 100%;
       margin: 0 auto;
-      overflow-x: auto;
-      overflow-y: hidden;
+      overflow: visible;
       padding: 52px 0 2px;
+    }
+    .stage.grid-mode .letter-board {
+      width: fit-content;
+    }
+    .app.reveal-mode .letter-board {
+      padding-top: clamp(36px, 7.4vh, 52px);
     }
 
     .chosen-number {
       position: absolute;
       z-index: 3;
       left: 50%;
-      top: 50%;
+      top: 44%;
       opacity: 0;
       color: var(--text);
       font-size: clamp(54px, 18vw, 96px);
@@ -238,9 +281,12 @@
       font-weight: 820;
       transform: translate(-50%, calc(-50% + 24px)) scale(.92);
       transition:
-        opacity .22s ease,
-        transform .8s cubic-bezier(.18,.92,.22,1),
-        font-size .8s cubic-bezier(.18,.92,.22,1);
+        opacity .3s ease,
+        left .92s cubic-bezier(.18,.92,.22,1),
+        right .92s cubic-bezier(.18,.92,.22,1),
+        top .92s cubic-bezier(.18,.92,.22,1),
+        transform .92s cubic-bezier(.18,.92,.22,1),
+        font-size .92s cubic-bezier(.18,.92,.22,1);
       pointer-events: none;
     }
     .stage.show-number .chosen-number {
@@ -311,17 +357,20 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: clamp(12px, 2.4vw, 22px);
     }
     .stage.grid-mode #words { align-items: flex-start; }
+    .app.reveal-mode #words {
+      gap: clamp(6px, 1.6vh, 14px);
+    }
 
     .word-row {
-      min-height: 43px;
+      min-height: clamp(50px, 8vw, 78px);
       display: flex;
       align-items: center;
       justify-content: center;
       white-space: nowrap;
-      font-size: clamp(24px, 7vw, 36px);
+      font-size: clamp(36px, 10.8vw, 68px);
       line-height: 1.15;
       font-family: var(--marker);
       font-weight: 400;
@@ -342,12 +391,17 @@
     }
 
     .stage.grid-mode .word-row {
-      font-size: clamp(24px, 6.4vw, 34px);
+      font-size: clamp(30px, 9.5vw, 58px);
+      min-height: clamp(36px, 8vh, 64px);
       font-weight: 400;
       letter-spacing: 0;
     }
     .stage.grid-mode .letter { width: var(--cell); }
-    .stage.grid-mode .letter.beyond-six { opacity: .22; }
+    .stage.grid-mode .letter.beyond-six {
+      width: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
     .stage.grid-mode .letter.selected {
       color: var(--danger);
       transform: scale(1.11);
@@ -370,7 +424,7 @@
       position: relative;
       z-index: 2;
       text-align: center;
-      min-height: 92px;
+      min-height: 128px;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
@@ -381,6 +435,10 @@
       transition: opacity .4s ease, transform .5s cubic-bezier(.2,.8,.2,1);
     }
     .reveal.visible { opacity: 1; transform: translateY(0); }
+    .app.reveal-mode .reveal {
+      min-height: clamp(86px, 19vh, 150px);
+      padding-top: 10px;
+    }
     .reveal small {
       color: var(--muted);
       font-size: 11px;
@@ -390,13 +448,13 @@
       margin-bottom: 5px;
     }
     .answer {
-      min-height: 45px;
-      font-size: clamp(34px, 10vw, 54px);
+      min-height: 74px;
+      font-size: clamp(56px, 17vw, 104px);
       line-height: 1;
       font-family: var(--marker);
       font-weight: 400;
       letter-spacing: 0;
-      color: var(--text);
+      color: var(--danger);
       text-transform: uppercase;
     }
     .answer-char {
@@ -410,6 +468,22 @@
       to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
     }
 
+    .reveal-reset {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      z-index: 8;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity .3s ease, transform .35s cubic-bezier(.2,.8,.2,1);
+    }
+    .stage.reveal-finished .reveal-reset {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
     .tool-dock {
       position: fixed;
       left: 18px;
@@ -418,6 +492,9 @@
       display: flex;
       align-items: flex-end;
       gap: 10px;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity .32s ease, transform .48s cubic-bezier(.2,.8,.2,1);
     }
 
     .tool-toggle {
@@ -427,8 +504,11 @@
       border-radius: 999px;
       background: var(--surface);
       color: var(--muted);
-      font-size: 24px;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
       line-height: 1;
+      padding: 0;
       cursor: pointer;
       box-shadow: 0 1px 2px rgba(0,0,0,.05);
     }
@@ -572,6 +652,7 @@
         <small>Selected letters</small>
         <div id="answer" class="answer"></div>
       </div>
+      <button id="revealResetBtn" class="icon-btn reveal-reset" type="button">Reset</button>
     </section>
 
     <div class="tool-dock">
@@ -609,6 +690,7 @@
       highlightedNumber: null,
       scannerPosition: null,
       revealMode: false,
+      revealFinished: false,
       revealedRows: 0,
       answerReady: false,
       revealing: false,
@@ -635,7 +717,7 @@
       },
       {
         title: 'Let the animation finish',
-        body: 'The chosen digit appears large at the bottom, moves to the top right, then the letters line up and reveal themselves. Do not click anything while that is happening.'
+        body: 'The chosen digit appears large in the centre, moves to the top right, then the letters line up and reveal themselves. Do not click anything while that is happening.'
       },
       {
         title: 'Practise with sample words',
@@ -656,6 +738,7 @@
     const addBtn = document.getElementById('addBtn');
     const undoBtn = document.getElementById('undoBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const revealResetBtn = document.getElementById('revealResetBtn');
     const toolsToggle = document.getElementById('toolsToggle');
     const toolPanel = document.getElementById('toolPanel');
     const sampleBtn = document.getElementById('sampleBtn');
@@ -749,6 +832,7 @@
       stage.classList.toggle('show-number', state.numberVisible);
       stage.classList.toggle('number-parked', state.numberParked);
       stage.classList.toggle('numbers-mode', state.numbersVisible);
+      stage.classList.toggle('reveal-finished', state.revealFinished);
     }
 
     function renderNumbers() {
@@ -850,6 +934,7 @@
       state.highlightedNumber = null;
       state.scannerPosition = null;
       state.revealMode = false;
+      state.revealFinished = false;
       state.revealedRows = 0;
       state.answerReady = false;
       revealEl.classList.remove('visible');
@@ -978,6 +1063,7 @@
       state.highlightedNumber = null;
       state.scannerPosition = null;
       state.revealMode = false;
+      state.revealFinished = false;
       state.submitted = selectedNumber;
       state.gridActive = false;
       state.revealedRows = 0;
@@ -989,7 +1075,7 @@
       renderWords();
       renderControls();
 
-      await sleep(1450);
+      await sleep(1900);
 
       const numberBeforePark = chosenNumberEl.getBoundingClientRect();
       state.numberParked = true;
@@ -1041,6 +1127,8 @@
       await sleep(820 + state.words.length * 110);
 
       state.revealing = false;
+      state.revealFinished = true;
+      renderKeyNumber();
       renderWords();
       renderControls();
     }
@@ -1159,6 +1247,7 @@
     });
 
     resetBtn.addEventListener('click', reset);
+    revealResetBtn.addEventListener('click', reset);
 
     document.addEventListener('keydown', event => {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || state.tutorialOpen) return;
